@@ -78,13 +78,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="Convolution.cu" />
+    <CudaCompile Include="Gradient.cu" />
+    <CudaCompile Include="ImageIngester.cu" />
     <CudaCompile Include="main.cu" />
+    <CudaCompile Include="MaxPool.cu" />
     <CudaCompile Include="ReLU.cu" />
+    <CudaCompile Include="ReLU_Test.cu" />
+    <CudaCompile Include="TransposeConvolution.cu" />
+    <CudaCompile Include="Utilities.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Convolution.cuh" />
     <ClInclude Include="CunetaModule.cuh" />
+    <ClInclude Include="Gradient.cuh" />
+    <ClInclude Include="ImageIngester.cuh" />
+    <ClInclude Include="MaxPool.cuh" />
     <ClInclude Include="ReLU.cuh" />
+    <ClInclude Include="ReLU_Test.cuh" />
+    <ClInclude Include="TransposeConvolution.cuh" />
+    <ClInclude Include="Utilities.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
