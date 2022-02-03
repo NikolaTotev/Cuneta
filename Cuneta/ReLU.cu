@@ -66,7 +66,6 @@ void ReLU::ForwardPass()
 	cudaMalloc((void**)&d_Output, byteCount);
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
-
 	cudaMemcpy(d_Input, m_InputMatrix, byteCount, cudaMemcpyHostToDevice);
 
 	//Define block size and threads per block.
@@ -76,7 +75,6 @@ void ReLU::ForwardPass()
 	ReLUKernel <<<blockGrid, threadGrid >>> (d_Input, d_Output, m_InputMatrixHeight, m_InputMatrixWidth);
 	cudaDeviceSynchronize();
 
-	int a = 2;
 	//Copy back result into host memory d_Output -> m_OutputMatrix
 	cudaMemcpy(m_OutputMatrix, d_Output, byteCount, cudaMemcpyDeviceToHost);
 

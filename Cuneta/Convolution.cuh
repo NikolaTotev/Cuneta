@@ -10,16 +10,18 @@
 
 class Convolution : public CunetaModule
 {
-	Convolution(float* _inputMatrix, float* _outputMatrix);
+public:
+	Convolution(float* _inputMatrix, int _inputHeight, int _inputWidth, int _filterSize);
 	float* filter;
-	int fliterSize;
+	float* toeplitzMatrix;
+	int filterSize;
 	void ForwardPass() override;
 	void BackwardPass() override;
 	void UpdateModule() override;
 	void Dialate(float* _input, float *_output);
+	void FilterToToeplitzMatrix();
+	void InitilizeFilter();
 
-	//Input and output will be in global memory. d_ shows in which memory the variables are stored.
-	__global__ void ConvolutionKernel(float* d_Input, float* d_Output) {};
 };
 
 #endif

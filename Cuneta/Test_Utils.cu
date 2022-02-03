@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "Convolution.cuh"
 #include "MaxPool.cuh"
 #include "ReLU.cuh"
 using namespace std;
@@ -11,7 +12,7 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 	cout << "Starting ReLU Test" << endl;
 	cout << "Original matrix:" << endl;
 	int rowCounter = 0;
-	for (int i = 0; i < matrixWidth*matrixHeight; ++i)
+	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
 	{
 		cout << inputMatrix[i] << " ";
 		rowCounter++;
@@ -25,7 +26,7 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 
 	ReLU testSubject = ReLU(inputMatrix, outputMatrix, matrixHeight, matrixHeight, matrixWidth, matrixWidth);
 
-	cout << "Starting forward pass test." << endl; 
+	cout << "Starting forward pass test." << endl;
 	testSubject.ForwardPass();
 
 	cout << "Matrix after ReLU:" << endl;
@@ -61,7 +62,7 @@ void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int m
 	cout << "Starting forward pass test." << endl;
 	testSubject.ForwardPass();
 
-	cout << "Matrix after ReLU:" << endl;
+	cout << "Matrix after MaxPool:" << endl;
 
 
 	for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
@@ -71,4 +72,43 @@ void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int m
 	cout << endl;
 }
 
+
+void TestConvolution(float* inputMatrix, int matrixWidth, int matrixHeight, int filterSize)
+{
+	cout << "Starting MaxPool Test" << endl;
+	cout << "Original matrix:" << endl;
+	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+	{
+		cout << inputMatrix[i] << " ";
+	}
+	cout << endl;
+
+	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
+
+	cout << "Generated filter:" << endl;
+	testSubject.ForwardPass();
+
+	for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+	{
+		cout << testSubject.filter[i] << " ";
+	}
+
+	cout << endl;
+
+
+	cout << "Generated Toeplitz matrix:" << endl;
+	int numberOfInputElements = testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth;
+	int numberOfOutputElements = testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth;
+	cout << "Toeplitz matrix element count: " << numberOfInputElements * numberOfOutputElements << endl;
+
+	for (int i = 0; i < numberOfInputElements * numberOfOutputElements; ++i)
+	{
+		cout << testSubject.toeplitzMatrix[i] << " ";
+		if (i % 20 == 0)
+		{
+			cout << endl;
+		}
+	}
+	cout << endl;
+}
 
