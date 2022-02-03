@@ -10,13 +10,13 @@
 
 class MaxPool : public CunetaModule
 {
-	MaxPool(float* _inputMatrix, float* _outputMatrix);
+public:
+	MaxPool(float* _inputMatrix, int _inputHeight, int _inputWidth);
 	void ForwardPass() override;
 	void BackwardPass() override;
 	void UpdateModule() override;
 
 	//Input and output will be in global memory. d_ shows in which memory the variables are stored.
-	__global__ void MaxPoolKernel(float* d_Input, float* d_Output) {};
 };
 
 #endif
