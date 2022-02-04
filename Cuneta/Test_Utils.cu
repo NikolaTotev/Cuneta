@@ -12,7 +12,7 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 	cout << "Starting ReLU Test" << endl;
 	cout << "Original matrix:" << endl;
 	int rowCounter = 0;
-	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+	/*for (int i = 0; i < matrixWidth * matrixHeight; ++i)
 	{
 		cout << inputMatrix[i] << " ";
 		rowCounter++;
@@ -22,7 +22,7 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 			rowCounter = 0;
 		}
 	}
-	cout << endl;
+	cout << endl;*/
 
 	ReLU testSubject = ReLU(inputMatrix, outputMatrix, matrixHeight, matrixHeight, matrixWidth, matrixWidth);
 
@@ -34,7 +34,7 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 
 	testSubject.m_OutputMatrix[2];
 
-	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+	/*for (int i = 0; i < matrixWidth * matrixHeight; ++i)
 	{
 		cout << testSubject.m_OutputMatrix[i] << " ";
 		rowCounter++;
@@ -44,55 +44,85 @@ void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matr
 			rowCounter = 0;
 		}
 	}
-	cout << endl;
+	cout << endl;*/
 }
 
-void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight)
+void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight, bool printMatricies)
 {
 	cout << "Starting MaxPool Test" << endl;
 	cout << "Original matrix:" << endl;
-	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-	{
-		cout << inputMatrix[i] << " ";
+	int counter = 1;
+	if (printMatricies) {
+
+		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+		{
+			cout << inputMatrix[i] << " ";
+			counter++;
+			if (counter == matrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+
+		}
 	}
 	cout << endl;
 
-	MaxPool testSubject = MaxPool(inputMatrix, matrixHeight, matrixHeight);
+	MaxPool testSubject = MaxPool(inputMatrix, matrixHeight, matrixWidth);
 
 	cout << "Starting forward pass test." << endl;
 	testSubject.ForwardPass();
 
 	cout << "Matrix after MaxPool:" << endl;
 
+	counter = 1;
+	if (printMatricies) {
+		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+		{
+			cout << testSubject.m_OutputMatrix[i] << " ";
+			counter++;
 
-	for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
-	{
-		cout << testSubject.m_OutputMatrix[i] << " ";
+			if (counter == testSubject.m_OutputMatrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
 	}
 	cout << endl;
+	cout << testSubject.m_OutputMatrix[0] << " ";
 }
 
 
-void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize)
+void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
 {
 	cout << "Starting MaxPool Test" << endl;
 	cout << "Original matrix:" << endl;
-	for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+
+	if (printMatricies)
 	{
-		cout << inputMatrix[i] << " ";
+		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+		{
+			cout << inputMatrix[i] << " ";
+		}
+		cout << endl;
+
 	}
-	cout << endl;
 
 	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
 
 	cout << "Generated filter:" << endl;
-	
-	for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+
+	if (printMatricies)
 	{
-		cout << testSubject.filter[i] << " ";
+		for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+		{
+			cout << testSubject.filter[i] << " ";
+		}
+
+		cout << endl;
 	}
 
-	cout << endl;
 
 
 	cout << "Generated Toeplitz matrix:" << endl;
@@ -100,33 +130,44 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 	int numberOfOutputElements = testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth;
 	cout << "Toeplitz matrix element count: " << numberOfInputElements * numberOfOutputElements << endl;
 	int counter = 1;
-	for (int i = 0; i < numberOfInputElements * numberOfOutputElements; ++i)
-	{
-		cout << testSubject.toeplitzMatrix[i] << " ";
-		counter++;
 
-		if (counter == (matrixWidth * matrixHeight)+1)
+	if (printMatricies)
+	{
+		for (int i = 0; i < numberOfInputElements * numberOfOutputElements; ++i)
 		{
-			cout << endl;
-			counter = 1;
+			cout << testSubject.toeplitzMatrix[i] << " ";
+			counter++;
+
+			if (counter == (matrixWidth * matrixHeight) + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
 		}
+		cout << endl;
 	}
-	cout << endl;
+
+	cout << "Starting forward pass test" << endl;
 
 	testSubject.ForwardPass();
 
 	counter = 1;
-	for (int i = 0; i < testSubject.m_OutputMatrixHeight*testSubject.m_OutputMatrixWidth; ++i)
-	{
-		cout << testSubject.m_OutputMatrix[i] << " ";
-		counter++;
 
-		if (counter == testSubject.m_OutputMatrixWidth+1)
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
 		{
-			cout << endl;
-			counter = 1;
+			cout << testSubject.m_OutputMatrix[i] << " ";
+			counter++;
+
+			if (counter == testSubject.m_OutputMatrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
 		}
+		cout << endl;
 	}
-	cout << endl;
+	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
 }
 
