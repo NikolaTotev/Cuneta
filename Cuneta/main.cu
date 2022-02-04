@@ -9,8 +9,8 @@
 
 int main()
 {
-	int matrixHeight = 5;
-	int matrixWidth = 4;
+	int matrixHeight = 4;
+	int matrixWidth = 7;
 	int vectorizedMatrixSize = matrixWidth * matrixHeight;
 	float* input = new float[vectorizedMatrixSize];
 	float* output = new float[vectorizedMatrixSize];
@@ -28,7 +28,7 @@ int main()
 
 	//TestMaxPool(input, output, matrixWidth, matrixHeight);
 
-	TestConvolution(input, matrixWidth, matrixHeight, 3);
+	TestConvolution(input, matrixHeight, matrixWidth, 3);
 
 	return 0;
 }
