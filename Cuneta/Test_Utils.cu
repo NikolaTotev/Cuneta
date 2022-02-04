@@ -86,8 +86,7 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
 
 	cout << "Generated filter:" << endl;
-	testSubject.ForwardPass();
-
+	
 	for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
 	{
 		cout << testSubject.filter[i] << " ";
@@ -107,6 +106,22 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 		counter++;
 
 		if (counter == (matrixWidth * matrixHeight)+1)
+		{
+			cout << endl;
+			counter = 1;
+		}
+	}
+	cout << endl;
+
+	testSubject.ForwardPass();
+
+	counter = 1;
+	for (int i = 0; i < testSubject.m_OutputMatrixHeight*testSubject.m_OutputMatrixWidth; ++i)
+	{
+		cout << testSubject.m_OutputMatrix[i] << " ";
+		counter++;
+
+		if (counter == testSubject.m_OutputMatrixWidth+1)
 		{
 			cout << endl;
 			counter = 1;
