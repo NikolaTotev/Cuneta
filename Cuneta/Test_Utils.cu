@@ -73,7 +73,7 @@ void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int m
 }
 
 
-void TestConvolution(float* inputMatrix, int matrixWidth, int matrixHeight, int filterSize)
+void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize)
 {
 	cout << "Starting MaxPool Test" << endl;
 	cout << "Original matrix:" << endl;
@@ -100,13 +100,16 @@ void TestConvolution(float* inputMatrix, int matrixWidth, int matrixHeight, int 
 	int numberOfInputElements = testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth;
 	int numberOfOutputElements = testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth;
 	cout << "Toeplitz matrix element count: " << numberOfInputElements * numberOfOutputElements << endl;
-
+	int counter = 1;
 	for (int i = 0; i < numberOfInputElements * numberOfOutputElements; ++i)
 	{
 		cout << testSubject.toeplitzMatrix[i] << " ";
-		if (i % 20 == 0)
+		counter++;
+
+		if (counter == (matrixWidth * matrixHeight)+1)
 		{
 			cout << endl;
+			counter = 1;
 		}
 	}
 	cout << endl;
