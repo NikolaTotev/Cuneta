@@ -35,28 +35,26 @@ __global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputHeight,
 	int inputColumnIndex = threadIdx.x * 2;
 
 
-	int smallerInputSide = fminf(_inputHeight, _inputWidth);
-	int smallerOutputSide = fminf(_outputHeight, _outputWidth);
 
-	int outputArrayIndex = outputRowIndex * smallerOutputSide + outputColumnIndex;
 
-	int inputArrayIndex = inputRowIndex* smallerInputSide + inputColumnIndex;
-	int initialTopLeftRow = inputArrayIndex;
+	int outputArrayIndex = outputRowIndex *_outputWidth + outputColumnIndex;
+
+	int inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
 
 	float currentMax = d_Input[inputArrayIndex];
 	float currentPixel = 555;
 	int var = 0;
-
 	for (int row = 0; row < 2; row++)
 	{
 		inputColumnIndex = threadIdx.x * 2;
 		inputRowIndex += row;
 
+	
 		for (int col = 0; col < 2; col++)
 		{
 			inputColumnIndex += col;
 
-			inputArrayIndex = inputRowIndex * smallerInputSide + inputColumnIndex;
+			inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
 
 			currentPixel = d_Input[inputArrayIndex];
 
@@ -88,6 +86,11 @@ MaxPool::MaxPool(float* _inputMatrix, int _inputHeight, int _inputWidth)
 
 void MaxPool::ForwardPass()
 {
+	if (m_InputMatrixWidth % 2 != 0 || m_InputMatrixHeight % 2 != 0)
+	{
+		cout << "Current version of MaxPool does not support odd matrix sizes of type " << m_InputMatrixHeight << "x" << m_InputMatrixWidth << endl;
+		return;
+	}
 	size_t totalInputPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
 	size_t totalOutPutPixelCount = m_OutputMatrixHeight * m_OutputMatrixWidth;
 	int inputByteCount = totalInputPixelCount * sizeof(float);
@@ -104,6 +107,7 @@ void MaxPool::ForwardPass()
 	cudaMalloc((void**)&d_Output, outputByteCount);
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
+	cudaMemset((void*)d_Output, -69, outputByteCount);
 
 	cudaMemcpy(d_Input, m_InputMatrix, inputByteCount, cudaMemcpyHostToDevice);
 
