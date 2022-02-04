@@ -24,53 +24,31 @@
 #include <cmath>
 using namespace std;
 
-__global__ void ConvolutionKernel(float* d_Input, float* d_Output, int _inputHeight, int _inputWidth, int _outputHeight, int _outputWidth)
+__global__ void ConvolutionKernel(float* d_Input, float* d_Toeplitz, float* d_Output, int _toeplitzHeight, int _toeplitzWidth, int _outputHeight, int _outputWidth, int _convolutionInputWidth, int _columnShiftsPerBlock)
 {
-	//These define indecies for output matrix;
-	int outputRowIndex = blockIdx.x;
-	int outputColumnIndex = threadIdx.x;
-
-	//Starts from "top left" of current block of pixels being processed
-	int inputRowIndex = blockIdx.x * 2;
-	int inputColumnIndex = threadIdx.x * 2;
-
-
-	int smallerInputSide = fminf(_inputHeight, _inputWidth);
+	int largerSide = fmaxf(_toeplitzHeight, _toeplitzWidth);
 	int smallerOutputSide = fminf(_outputHeight, _outputWidth);
+	int initialBlockOffset = blockIdx.x * largerSide * _columnShiftsPerBlock;
+	int rowIndexWithinBlock = initialBlockOffset + (threadIdx.x * largerSide);
+	int outputArrayIndex = blockIdx.x * smallerOutputSide + threadIdx.x;
 
-	int outputArrayIndex = outputRowIndex * smallerOutputSide + outputColumnIndex;
-
-	int inputArrayIndex = inputRowIndex * smallerInputSide + inputColumnIndex;
-	int initialTopLeftRow = inputArrayIndex;
-
-	float currentMax = d_Input[inputArrayIndex];
-	float currentPixel = 555;
-	int var = 0;
-
-	for (int row = 0; row < 2; row++)
+	/*if (blockIdx.x == 1 && threadIdx.x == 0)
 	{
-		inputColumnIndex = threadIdx.x * 2;
-		inputRowIndex += row;
+		d_Output[0] = blockIdx.x;
+		d_Output[1] = threadIdx.x;
+		d_Output[2] = initialBlockOffset;
+		d_Output[3] = rowIndexWithinBlock;
+		d_Output[4] = outputArrayIndex;
+	}*/
 
-		for (int col = 0; col < 2; col++)
-		{
-			inputColumnIndex += col;
-
-			inputArrayIndex = inputRowIndex * smallerInputSide + inputColumnIndex;
-
-			currentPixel = d_Input[inputArrayIndex];
-
-			//NOTE the case currentPixel >= currentMax
-			if (currentPixel > currentMax)
-			{
-				currentMax = currentPixel;
-			}
-		}
-
+	int result = 0;
+	for (int i = 0; i < largerSide; ++i)
+	{
+		result += d_Input[i] * d_Toeplitz[rowIndexWithinBlock];
+		rowIndexWithinBlock++;
 	}
 
-	d_Output[outputArrayIndex] = currentMax;
-
+	d_Output[outputArrayIndex] = result;
 };
 
 __global__ void ToeplitzKernel(float* d_Filter, float* d_Output, int _toeplitzHeight, int _toeplitzWidth, int _filterHeight, int _filterWidth, int _convolutionInputWidth, int _columnShiftsPerBlock)
@@ -79,9 +57,9 @@ __global__ void ToeplitzKernel(float* d_Filter, float* d_Output, int _toeplitzHe
 	int spacing = _convolutionInputWidth - _filterWidth;
 	int largerSide = fmaxf(_toeplitzHeight, _toeplitzWidth);
 	int initialBlockOffset = blockIdx.x * largerSide * _columnShiftsPerBlock;
-	int rowIndexWithinBlock= initialBlockOffset + (threadIdx.x  * largerSide);
+	int rowIndexWithinBlock = initialBlockOffset + (threadIdx.x * largerSide);
 	int threadWriteIndex = rowIndexWithinBlock + threadIdx.x + (blockIdx.x * _convolutionInputWidth);
-	
+
 	/*if (blockIdx.x ==0 && threadIdx.x == 0)
 	{
 		d_Output[0] = blockIdx.x;
@@ -95,13 +73,13 @@ __global__ void ToeplitzKernel(float* d_Filter, float* d_Output, int _toeplitzHe
 	int filterReadIndex = 0;
 	int skippedPositions = 0;
 	bool shouldSkip = false;
-	for (int j = 0; j < (_filterHeight * _filterWidth)+(2*spacing); ++j)
+	for (int j = 0; j < (_filterHeight * _filterWidth) + (2 * spacing); ++j)
 	{
 		if (counter == 4 || shouldSkip)
 		{
 			shouldSkip = true;
 			skippedPositions++;
-			if(skippedPositions == spacing)
+			if (skippedPositions == spacing)
 			{
 				shouldSkip = false;
 				skippedPositions = 0;
@@ -137,6 +115,52 @@ Convolution::Convolution(float* _inputMatrix, int _inputHeight, int _inputWidth,
 
 void Convolution::ForwardPass()
 {
+	int rowShifts = m_OutputMatrixHeight;
+	int columnShifts = m_OutputMatrixWidth;
+
+	int elementsInInput = m_InputMatrixHeight * m_InputMatrixWidth;
+	int elementsInOutput = m_OutputMatrixHeight * m_OutputMatrixWidth;
+	std::cout << "Number of row shifts " << rowShifts << std::endl;
+	std::cout << "Number of column shifts " << columnShifts << std::endl;
+
+	std::cout << "Input elements " << elementsInInput << std::endl;
+	std::cout << "Output elements" << elementsInOutput << std::endl;
+
+	dim3 blockGrid(rowShifts, 1, 1);
+	dim3 threads(columnShifts, 1, 1);
+
+	size_t inputElementCount = m_InputMatrixHeight * m_InputMatrixWidth;
+	size_t toeplitzMatrixElementCount = elementsInInput * elementsInOutput;
+	size_t outputElementCount = m_OutputMatrixHeight * m_OutputMatrixWidth;
+
+	int inputByteCount = inputElementCount * sizeof(float);
+	int toeplitzByteCount = toeplitzMatrixElementCount * sizeof(float);
+	int outputByteCount = outputElementCount * sizeof(float);
+	std::cout << " Input element count " << inputElementCount << std::endl;
+	std::cout << "Toeplitz element count " << toeplitzMatrixElementCount << std::endl;
+	std::cout << "Output element count " << outputByteCount << std::endl;
+
+	//Define pointers for deviceMemory locations
+	float* d_Input;
+	float* d_Toeplitz;
+	float* d_Output;
+
+
+	//Allocate memory
+	cudaMalloc((void**)&d_Input, inputByteCount);
+	cudaMalloc((void**)&d_Toeplitz, toeplitzByteCount);
+	cudaMalloc((void**)&d_Output, outputByteCount);
+
+
+	//Copy filter into global device memory m_InputMatrix -> d_Input
+	cout << "Filter [0]" << filter[0] << endl;
+	cudaMemcpy(d_Input, m_InputMatrix, inputByteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_Toeplitz, toeplitzMatrix, toeplitzByteCount, cudaMemcpyHostToDevice);
+
+	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Toeplitz, d_Output, elementsInInput, elementsInOutput, m_OutputMatrixHeight, m_OutputMatrixWidth, m_InputMatrixWidth, columnShifts);
+	cudaDeviceSynchronize();
+
+	cudaMemcpy(m_OutputMatrix, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
 
 }
 
