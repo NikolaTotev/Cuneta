@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="Convolution.cu" />
-    <CudaCompile Include="Gradient.cu" />
+    <CudaCompile Include="ErrorCalcModule.cu" />
     <CudaCompile Include="ImageIngester.cu" />
     <CudaCompile Include="main.cu" />
     <CudaCompile Include="MaxPool.cu" />
@@ -90,7 +90,7 @@
   <ItemGroup>
     <ClInclude Include="Convolution.cuh" />
     <ClInclude Include="CunetaModule.cuh" />
-    <ClInclude Include="Gradient.cuh" />
+    <ClInclude Include="ErrorCalcModule.cuh" />
     <ClInclude Include="ImageIngester.cuh" />
     <ClInclude Include="MaxPool.cuh" />
     <ClInclude Include="ReLU.cuh" />
