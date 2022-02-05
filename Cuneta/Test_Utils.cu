@@ -5,6 +5,7 @@
 #include "Convolution.cuh"
 #include "MaxPool.cuh"
 #include "ReLU.cuh"
+#include "TransposeConvolution.cuh"
 using namespace std;
 
 void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight)
@@ -96,14 +97,24 @@ void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int m
 
 void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
 {
-	cout << "Starting MaxPool Test" << endl;
+	cout << "Starting Convolution Test" << endl;
 	cout << "Original matrix:" << endl;
+
+	int counter = 1;
 
 	if (printMatricies)
 	{
 		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
 		{
 			cout << inputMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == matrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
 		}
 		cout << endl;
 
@@ -118,32 +129,16 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 		for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
 		{
 			cout << testSubject.filter[i] << " ";
-		}
 
-		cout << endl;
-	}
-
-
-
-	cout << "Generated Toeplitz matrix:" << endl;
-	int numberOfInputElements = testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth;
-	int numberOfOutputElements = testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth;
-	cout << "Toeplitz matrix element count: " << numberOfInputElements * numberOfOutputElements << endl;
-	int counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < numberOfInputElements * numberOfOutputElements; ++i)
-		{
-			cout << testSubject.toeplitzMatrix[i] << " ";
 			counter++;
 
-			if (counter == (matrixWidth * matrixHeight) + 1)
+			if (counter == testSubject.filterSize + 1)
 			{
 				cout << endl;
 				counter = 1;
 			}
 		}
+
 		cout << endl;
 	}
 
@@ -158,6 +153,7 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
 		{
 			cout << testSubject.m_OutputMatrix[i] << " ";
+
 			counter++;
 
 			if (counter == testSubject.m_OutputMatrixWidth + 1)
@@ -171,3 +167,94 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
 }
 
+
+void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
+{
+	cout << "Starting Transpose Convolution Test" << endl;
+	cout << "Original matrix:" << endl;
+
+	int counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+		{
+			cout << inputMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == matrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+
+	}
+
+	TransposeConvolution testSubject = TransposeConvolution(inputMatrix, matrixHeight, matrixWidth, filterSize, 2);
+
+	cout << "Generated filter:" << endl;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+		{
+			cout << testSubject.filter[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.filterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+	}
+
+	cout << "Result from padding input" << endl;
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.paddedInputHeight * testSubject.paddedInputWidth; ++i)
+		{
+			cout << testSubject.paddedInput[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.paddedInputWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+	}
+
+	cout << "Starting forward pass test" << endl;
+
+	testSubject.ForwardPass();
+
+	counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+		{
+			cout << testSubject.m_OutputMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.m_OutputMatrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+	}
+	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
+}
