@@ -24,28 +24,44 @@
 #include <cmath>
 using namespace std;
 
-__global__ void ConvolutionKernel(float* d_Input, float* d_Toeplitz, float* d_Output, int _toeplitzHeight, int _toeplitzWidth, int _outputHeight, int _outputWidth, int _convolutionInputWidth, int _columnShiftsPerBlock)
+__global__ void ConvolutionKernel(float* d_Input, float* d_Filter, float* d_Output, int _toeplitzHeight, int _toeplitzWidth, int _outputHeight, int _outputWidth, int _convolutionInputWidth, int _columnShiftsPerBlock)
 {
-	int largerSide = fmaxf(_toeplitzHeight, _toeplitzWidth);
-	int smallerOutputSide = fminf(_outputHeight, _outputWidth);
-	int initialBlockOffset = blockIdx.x * largerSide * _columnShiftsPerBlock;
-	int rowIndexWithinBlock = initialBlockOffset + (threadIdx.x * largerSide);
-	int outputArrayIndex = blockIdx.x * smallerOutputSide + threadIdx.x;
+	//These define indecies for output matrix;
+	int outputRowIndex = blockIdx.x;
+	int outputColumnIndex = threadIdx.x;
 
-	/*if (blockIdx.x == 1 && threadIdx.x == 0)
-	{
-		d_Output[0] = blockIdx.x;
-		d_Output[1] = threadIdx.x;
-		d_Output[2] = initialBlockOffset;
-		d_Output[3] = rowIndexWithinBlock;
-		d_Output[4] = outputArrayIndex;
-	}*/
+	//Starts from "top left" of current block of pixels being processed
+	int inputRowIndex = blockIdx.x;
+	int inputColumnIndex = threadIdx.x;
 
-	int result = 0;
-	for (int i = 0; i < largerSide; ++i)
+	int outputArrayIndex = outputRowIndex * _outputWidth + outputColumnIndex;
+
+	int inputArrayIndex = 0;
+
+	float result = 0;
+	int filterIndex = 0;
+	int temp = 0;
+	for (int row = 0; row < 3; row++)
 	{
-		result += d_Input[i] * d_Toeplitz[rowIndexWithinBlock];
-		rowIndexWithinBlock++;
+		inputColumnIndex = threadIdx.x ;
+
+		for (int col = 0; col < 3; col++)
+		{
+			inputArrayIndex = inputRowIndex * _convolutionInputWidth + inputColumnIndex;
+
+			/*if (blockIdx.x == 1 && threadIdx.x == 1)
+			{
+				d_Output[temp] =
+					inputArrayIndex;
+				temp++;
+			}*/
+
+			result += d_Input[inputArrayIndex] * d_Filter[filterIndex];
+			filterIndex++;
+			inputColumnIndex += 1;
+		}
+		inputRowIndex += 1;
+
 	}
 
 	d_Output[outputArrayIndex] = result;
@@ -109,8 +125,7 @@ Convolution::Convolution(float* _inputMatrix, int _inputHeight, int _inputWidth,
 	filterSize = _filterSize;
 
 	m_OutputMatrix = new float[m_OutputMatrixHeight * m_OutputMatrixWidth];
-	InitilizeFilter();
-	FilterToToeplitzMatrix();
+	InitializeFilter();
 }
 
 void Convolution::ForwardPass()
@@ -130,34 +145,33 @@ void Convolution::ForwardPass()
 	dim3 threads(columnShifts, 1, 1);
 
 	size_t inputElementCount = m_InputMatrixHeight * m_InputMatrixWidth;
-	size_t toeplitzMatrixElementCount = elementsInInput * elementsInOutput;
+	size_t filterMatrixElementCount = filterSize * filterSize;
 	size_t outputElementCount = m_OutputMatrixHeight * m_OutputMatrixWidth;
 
 	int inputByteCount = inputElementCount * sizeof(float);
-	int toeplitzByteCount = toeplitzMatrixElementCount * sizeof(float);
+	int filterByteCount = filterMatrixElementCount * sizeof(float);
 	int outputByteCount = outputElementCount * sizeof(float);
-	std::cout << " Input element count " << inputElementCount << std::endl;
-	std::cout << "Toeplitz element count " << toeplitzMatrixElementCount << std::endl;
+	std::cout << "Input element count " << inputElementCount << std::endl;
+	std::cout << "Filter element count " << filterMatrixElementCount << std::endl;
 	std::cout << "Output element count " << outputByteCount << std::endl;
 
 	//Define pointers for deviceMemory locations
 	float* d_Input;
-	float* d_Toeplitz;
+	float* d_Filter;
 	float* d_Output;
 
 
 	//Allocate memory
 	cudaMalloc((void**)&d_Input, inputByteCount);
-	cudaMalloc((void**)&d_Toeplitz, toeplitzByteCount);
+	cudaMalloc((void**)&d_Filter, filterByteCount);
 	cudaMalloc((void**)&d_Output, outputByteCount);
 
 
 	//Copy filter into global device memory m_InputMatrix -> d_Input
-	cout << "Filter [0]" << filter[0] << endl;
 	cudaMemcpy(d_Input, m_InputMatrix, inputByteCount, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_Toeplitz, toeplitzMatrix, toeplitzByteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_Filter, filter, filterByteCount, cudaMemcpyHostToDevice);
 
-	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Toeplitz, d_Output, elementsInInput, elementsInOutput, m_OutputMatrixHeight, m_OutputMatrixWidth, m_InputMatrixWidth, columnShifts);
+	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, elementsInInput, elementsInOutput, m_OutputMatrixHeight, m_OutputMatrixWidth, m_InputMatrixWidth, columnShifts);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(m_OutputMatrix, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
@@ -176,51 +190,7 @@ void Convolution::Dialate(float* _input, float* _output)
 
 }
 
-
-void Convolution::FilterToToeplitzMatrix()
-{
-	int columnShifts = m_OutputMatrixWidth;
-	int rowShifts = m_OutputMatrixHeight;
-	int elementsInInput = m_InputMatrixHeight * m_InputMatrixWidth;
-	int elementsInOutput = m_OutputMatrixHeight * m_OutputMatrixWidth;
-	toeplitzMatrix = new float[elementsInInput * elementsInOutput];
-	std::cout << "Number of row shifts " << rowShifts << std::endl;
-	std::cout << "Number of column shifts " << columnShifts << std::endl;
-
-	std::cout << "Input elements " << elementsInInput << std::endl;
-	std::cout << "Output elements" << elementsInOutput << std::endl;
-
-	dim3 blockGrid(rowShifts, 1, 1);
-	dim3 threads(columnShifts, 1, 1);
-
-	size_t toeplitzMatrixElementCount = elementsInInput * elementsInOutput;
-	size_t filterElementCount = filterSize * filterSize;
-	int toeplitzByteCount = toeplitzMatrixElementCount * sizeof(float);
-	int filterByteCount = filterElementCount * sizeof(float);
-	std::cout << "Toeplitz element count " << toeplitzMatrixElementCount << std::endl;
-	std::cout << "Filter element count " << filterElementCount << std::endl;
-
-	//Define pointers for deviceMemory locations
-	float* d_Output;
-	float* d_Filter;
-
-	//Allocate memory
-	cudaMalloc((void**)&d_Output, toeplitzByteCount);
-	cudaMemset((void*)d_Output, 0, toeplitzByteCount);
-
-	cudaMalloc((void**)&d_Filter, filterByteCount);
-
-	//Copy filter into global device memory m_InputMatrix -> d_Input
-	cout << "Filter [0]" << filter[0] << endl;
-	cudaMemcpy(d_Filter, filter, filterByteCount, cudaMemcpyHostToDevice);
-	cout << "_convolutionInputWidth" << m_InputMatrixWidth << endl;
-	ToeplitzKernel << <blockGrid, threads >> > (d_Filter, d_Output, elementsInInput, elementsInOutput, filterSize, filterSize, m_InputMatrixWidth, columnShifts);
-	cudaDeviceSynchronize();
-
-	cudaMemcpy(toeplitzMatrix, d_Output, toeplitzByteCount, cudaMemcpyDeviceToHost);
-}
-
-void Convolution::InitilizeFilter()
+void Convolution::InitializeFilter()
 {
 	std::random_device rd{};
 	std::mt19937 gen{ rd() };
