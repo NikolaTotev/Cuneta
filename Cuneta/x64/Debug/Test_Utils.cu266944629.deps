@@ -34,6 +34,7 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\stdexcept
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\stdint.h
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\streambuf
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\string
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\system_error
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\typeinfo
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\type_traits
@@ -145,6 +146,7 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include\vector_types.h
 D:\Documents\Project Files\Cuneta\Cuneta\Convolution.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\CunetaModule.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ErrorCalcModule.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\ImageIngester.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\MaxPool.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ReLU.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\Test_Utils.cuh
