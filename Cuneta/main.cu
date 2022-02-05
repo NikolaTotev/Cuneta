@@ -12,19 +12,30 @@ int main()
 {
 
 	cout << "Cuneta is starting..." << endl;
-	int matrixHeight = 4;
+	int matrixHeight = 6;
 	int matrixWidth = 4;
 	int vectorizedMatrixSize = matrixWidth * matrixHeight;
 	float* input = new float[vectorizedMatrixSize];
+	float* groundTruth = new float[vectorizedMatrixSize];
 	float* output = new float[vectorizedMatrixSize];
 
-	int max = 20;
-	int min = -5;
+	int max = 10;
+	int min = 0;
 	int range = max - min + 1;
 
 	for (int i = 0; i < matrixHeight * matrixWidth; ++i)
 	{
 		input[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
+	}
+
+	max = 1;
+	min = 0;
+	range = max - min + 1;
+
+	for (int i = 0; i < matrixHeight * matrixWidth; ++i)
+	{
+		groundTruth[i] = rand() % range + min;
 		//std::cout << input[i] << std::endl;
 	}
 
@@ -43,9 +54,10 @@ int main()
 	std::cout << input[matrixWidth + 1] << std::endl;
 	std::cout << input[matrixWidth + 2] << std::endl;*/
 
-	TestConvolution(input, matrixHeight, matrixWidth, 3,true);
+	//TestConvolution(input, matrixHeight, matrixWidth, 3, true);
 
 	//TestTransposeConvolution(input, matrixHeight, matrixWidth, 3, true);
+	TestErrorCalcModule(input, groundTruth, matrixHeight, matrixWidth, true);
 
 	return 0;
 }
