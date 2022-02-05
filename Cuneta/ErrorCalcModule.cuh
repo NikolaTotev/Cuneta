@@ -16,10 +16,11 @@ public:
 	float* groundTruthMatrix;
 	float* sigmoidResultMatrix;
 	float* crossEntropyResultMatrix;
+	float* intermediateSumResult;
 	void ForwardPass() override;
 	void BackwardPass() override;
 	void UpdateModule() override;
-	void PixelWiseSoftMax();
+	void PixelWiseSigmoid();
 	void PixelWiseCrossEntropy();
 	void CrossEntropySum();
 	
