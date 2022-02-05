@@ -19,6 +19,10 @@ int main()
 	float* groundTruth = new float[vectorizedMatrixSize];
 	float* output = new float[vectorizedMatrixSize];
 
+	string inputPath = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\Ingester_Ground_Truth_Test.txt";
+	string groundTruthPath = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\Ingester_Input_Test.txt";
+
+
 	int max = 10;
 	int min = 0;
 	int range = max - min + 1;
@@ -57,7 +61,9 @@ int main()
 	//TestConvolution(input, matrixHeight, matrixWidth, 3, true);
 
 	//TestTransposeConvolution(input, matrixHeight, matrixWidth, 3, true);
-	TestErrorCalcModule(input, groundTruth, matrixHeight, matrixWidth, true);
+	//TestErrorCalcModule(input, groundTruth, matrixHeight, matrixWidth, true);
+
+	TestImageIngester(inputPath, groundTruthPath, true);
 
 	return 0;
 }
