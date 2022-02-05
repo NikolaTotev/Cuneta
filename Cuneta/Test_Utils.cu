@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Convolution.cuh"
+#include "ErrorCalcModule.cuh"
 #include "MaxPool.cuh"
 #include "ReLU.cuh"
 #include "TransposeConvolution.cuh"
@@ -257,4 +258,113 @@ void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWi
 		cout << endl;
 	}
 	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
+}
+
+
+void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matrixHeight, int matrixWidth, bool printMatricies)
+{
+	cout << "Starting Error Calc Test" << endl;
+	cout << "Original matrix:" << endl;
+
+	int counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+		{
+			cout << inputMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == matrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << "Ground truth matrix:" << endl;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+		{
+			cout << groundTruthMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == matrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+
+	}
+
+	ErrorCalcModule testSubject = ErrorCalcModule(inputMatrix, groundTruthMatrix, matrixHeight, matrixWidth);
+
+	testSubject.PixelWiseSigmoid();
+
+	cout << "Sigmoid result:" << endl;
+	counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_InputMatrixWidth* testSubject.m_InputMatrixHeight; ++i)
+		{
+			cout << testSubject.sigmoidResultMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.m_InputMatrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+	}
+
+	testSubject.PixelWiseCrossEntropy();
+	cout << "Cross entropy result: " << endl;
+	counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
+		{
+			cout << testSubject.crossEntropyResultMatrix[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.m_InputMatrixWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+	}
+
+	cout << "Network error: " << endl;
+
+	testSubject.CrossEntropySum();
+
+	counter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_OutputMatrixHeight; ++i)
+		{
+			cout << testSubject.intermediateSumResult[i] << " ";
+		}
+		cout << endl;
+	}
+	cout << "Error calc module test complete." << endl;
 }
