@@ -4,22 +4,24 @@
 #ifndef IMAGE_INGESTER_GPU_H
 #define IMAGE_INGESTER_GPU_H
 
-#include <crt/host_defines.h>
-
+using namespace std;
 
 class ImageIngester
 {
 public:
-	std::string baseDirectory;
-	float* rawImageData;
-	float* normalizedImageData;
-	ImageIngester(std::string _baseDir);
+	string inputPath;
+	string groundTruthPath;
+	int inputHeight;
+	int inputWidth;
 
-	void ReadRawImageData();
-	void Normalize();
+	int groundTruthHeight;
+	int groundTruthWidth;
+	float* inputImageData;
+	float* groundTruthData;
 
-	__global__ void NormalizationKernel(float* d_Input, float* d_Output);
-
+	ImageIngester(string _inputPath, string _groundTruthPath);
+	void ReadData();
+		
 };
 
 #endif
