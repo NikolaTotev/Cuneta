@@ -10,15 +10,20 @@
 
 class TransposeConvolution : public CunetaModule
 {
-	TransposeConvolution(float* _inputMatrix, float* _outputMatrix);
+public:
+	TransposeConvolution(float* _inputMatrix, int _inputHeight, int _inputWidth, int _filterSize, int _paddingSize);
 	float* filter;
-	int fliterSize;
+	float* paddedInput;
+	int filterSize;
+	int paddingSize; 
+	int paddedInputHeight; 
+	int paddedInputWidth; 
 	void ForwardPass() override;
 	void BackwardPass() override;
 	void UpdateModule() override;
-	void GenerateToeplitzMatrix();
-	//Input and output will be in global memory. d_ shows in which memory the variables are stored.
-	__global__ void TransposeConvolutionKernel(float* d_Input, float* d_Output) {};
+	void PadInput();
+	void InitializeFilter();
+	
 
 };
 
