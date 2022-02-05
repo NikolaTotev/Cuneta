@@ -25,12 +25,11 @@
 
 
 //Input and output will be in global memory. d_ shows in which memory the variables are stored.
-__global__ void ReLUKernel(float* d_Input, float* d_Output, int matrixHeight, int matrixWidth)
+__global__ void ReLUKernel(float* d_Input, float* d_Output, int matrixWidth)
 {
 	int rowIndex = blockIdx.x;
 	int columnIndex = threadIdx.x;
-	int smallerSide = fminf(matrixHeight, matrixWidth);
-	int arrayIndex = rowIndex* smallerSide + columnIndex;
+	int arrayIndex = rowIndex* matrixWidth + columnIndex;
 	float pixel = d_Input[arrayIndex];
 
 	float ReLUResult = fmaxf(0,pixel);
@@ -72,7 +71,7 @@ void ReLU::ForwardPass()
 	dim3 blockGrid(m_InputMatrixHeight,1,1);
 	dim3 threadGrid(m_InputMatrixWidth,1,1);
 
-	ReLUKernel <<<blockGrid, threadGrid >>> (d_Input, d_Output, m_InputMatrixHeight, m_InputMatrixWidth);
+	ReLUKernel <<<blockGrid, threadGrid >>> (d_Input, d_Output, m_InputMatrixWidth);
 	cudaDeviceSynchronize();
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
