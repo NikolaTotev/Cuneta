@@ -4,6 +4,7 @@
 
 #include "Convolution.cuh"
 #include "ErrorCalcModule.cuh"
+#include "ImageIngester.cuh"
 #include "MaxPool.cuh"
 #include "ReLU.cuh"
 #include "TransposeConvolution.cuh"
@@ -314,7 +315,7 @@ void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matri
 
 	if (printMatricies)
 	{
-		for (int i = 0; i < testSubject.m_InputMatrixWidth* testSubject.m_InputMatrixHeight; ++i)
+		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
 		{
 			cout << testSubject.sigmoidResultMatrix[i] << " ";
 
@@ -367,4 +368,42 @@ void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matri
 		cout << endl;
 	}
 	cout << "Error calc module test complete." << endl;
+}
+
+
+void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies)
+{
+	ImageIngester testSubject = ImageIngester(inputPath, groundTruthPath);
+	testSubject.ReadData();
+
+	if (printMatricies)
+	{
+		int counter = 1;
+		for (int i = 0; i < testSubject.inputHeight * testSubject.inputWidth; ++i)
+		{
+			cout << testSubject.inputImageData[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.inputWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		
+		counter = 1;
+		for (int i = 0; i < testSubject.groundTruthHeight * testSubject.groundTruthWidth; ++i)
+		{
+			cout << testSubject.groundTruthData[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.groundTruthWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+	}
 }
