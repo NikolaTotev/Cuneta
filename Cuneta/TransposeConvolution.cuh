@@ -11,15 +11,15 @@
 class TransposeConvolution : public CunetaModule
 {
 public:
-	TransposeConvolution(float* _inputMatrix, int _inputHeight, int _inputWidth, int _filterSize, int _paddingSize);
+	TransposeConvolution(int _filterSize, int _paddingSize);
 	float* filter;
 	float* paddedInput;
 	int filterSize;
 	int paddingSize; 
 	int paddedInputHeight; 
 	int paddedInputWidth; 
-	void ForwardPass() override;
-	void BackwardPass() override;
+	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
+	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void UpdateModule() override;
 	void PadInput();
 	void InitializeFilter();

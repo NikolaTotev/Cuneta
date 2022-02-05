@@ -10,10 +10,9 @@
 class ReLU : public CunetaModule
 {
 public: 
-	ReLU(float* _inputMatrix, float* _outputMatrix, int _inHeight, int _outHeight, int _inWidth, int _outWidth);
-	ReLU(float* _inputMatrix, float* _outputMatrix);
-	void ForwardPass() override;
-	void BackwardPass() override;
+	ReLU();
+	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
+	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void UpdateModule() override;
 
 };

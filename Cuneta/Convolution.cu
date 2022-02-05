@@ -113,23 +113,32 @@ __global__ void ToeplitzKernel(float* d_Filter, float* d_Output, int _toeplitzHe
 	}
 };
 
-Convolution::Convolution(float* _inputMatrix, int _inputHeight, int _inputWidth, int _filterSize)
+Convolution::Convolution(int _filterSize)
 {
-	m_InputMatrix = _inputMatrix;
-	m_InputMatrixHeight = _inputHeight;
-	m_InputMatrixWidth = _inputWidth;
-
-	m_OutputMatrixHeight = _inputHeight - 2;
-	m_OutputMatrixWidth = _inputWidth - 2;
-
 	filterSize = _filterSize;
-
-	m_OutputMatrix = new float[m_OutputMatrixHeight * m_OutputMatrixWidth];
 	InitializeFilter();
-}
+}	
 
-void Convolution::ForwardPass()
+
+void Convolution::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth)
 {
+
+	m_InputMatrixHeight = fwdPassHeight;
+	m_InputMatrixWidth = fwdPassWidth;
+
+	m_OutputMatrixHeight = m_InputMatrixHeight - 2;
+	m_OutputMatrixWidth = m_InputMatrixWidth - 2;
+
+	int arrayLength = fwdPassHeight * fwdPassWidth;
+	size_t inputSize = arrayLength * sizeof(float);
+
+	m_InputMatrix = new float[arrayLength];
+	m_OutputMatrix = new float[m_OutputMatrixHeight * m_OutputMatrixWidth];
+
+	memcpy(m_InputMatrix, forwardPassInput, inputSize);
+
+
+
 	int rowShifts = m_OutputMatrixHeight;
 	int columnShifts = m_OutputMatrixWidth;
 
@@ -179,7 +188,7 @@ void Convolution::ForwardPass()
 }
 
 
-void Convolution::BackwardPass()
+void Convolution::BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth)
 {
 
 }

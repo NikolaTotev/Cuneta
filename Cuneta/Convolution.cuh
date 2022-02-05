@@ -11,11 +11,11 @@
 class Convolution : public CunetaModule
 {
 public:
-	Convolution(float* _inputMatrix, int _inputHeight, int _inputWidth, int _filterSize);
+	Convolution(int _filterSize);
 	float* filter;
 	int filterSize;
-	void ForwardPass() override;
-	void BackwardPass() override;
+	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
+	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void UpdateModule() override;
 	void Dialate(float* _input, float *_output);
 	void InitializeFilter();
