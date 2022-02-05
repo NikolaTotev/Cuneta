@@ -82,26 +82,13 @@ __global__ void PaddingKernel(float* d_UnpaddedInput, float* d_Output, int _padd
 	int arrayPosition = rowWriteIndex * _paddedInputWidth + columnWriteIndex;
 	int inputArrayPosition = inputRowReadIndex * _unpaddedInputWidth + inputColumnReadIndex;
 
-
-	//if(blockIdx.x == 0 && threadIdx.x == 1)
-	//{
-	//	d_Output[0] = arrayPosition;
-	//	d_Output[1] = rowWriteIndex;
-	//	d_Output[2] = columnWriteIndex;
-	//	d_Output[3] = _paddedInputWidth;
-	//	d_Output[4] = threadIdx.x;
-	//	d_Output[5] = inputArrayPosition;
-	//}
-	//
 	int var = 0;
 	for (int i = 0; i < _unpaddedInputWidth; i++)
 	{
 		d_Output[arrayPosition] = d_UnpaddedInput[inputArrayPosition];
 		arrayPosition++;
 		inputArrayPosition++;
-		
 	}
-
 }
 
 TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize)
@@ -192,8 +179,8 @@ void TransposeConvolution::UpdateModule()
 
 void TransposeConvolution::PadInput()
 {
-	paddedInputHeight = m_InputMatrixWidth + 2 * paddingSize;
-	paddedInputWidth = m_InputMatrixHeight + 2 * paddingSize;
+	paddedInputHeight = m_InputMatrixHeight + 2 * paddingSize;
+	paddedInputWidth = m_InputMatrixWidth + 2 * paddingSize;
 	int elementsInPaddedInput = paddedInputHeight * paddedInputWidth;
 
 	paddedInput = new float[elementsInPaddedInput];
