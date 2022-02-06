@@ -124,17 +124,17 @@ void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int 
 
 	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
 
-	cout << "Generated filter:" << endl;
+	cout << "Generated m_Filter:" << endl;
 
 	if (printMatricies)
 	{
-		for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
 		{
-			cout << testSubject.filter[i] << " ";
+			cout << testSubject.m_Filter[i] << " ";
 
 			counter++;
 
-			if (counter == testSubject.filterSize + 1)
+			if (counter == testSubject.m_FilterSize + 1)
 			{
 				cout << endl;
 				counter = 1;
@@ -197,17 +197,17 @@ void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWi
 
 	TransposeConvolution testSubject = TransposeConvolution(inputMatrix, matrixHeight, matrixWidth, filterSize, 2);
 
-	cout << "Generated filter:" << endl;
+	cout << "Generated m_Filter:" << endl;
 
 	if (printMatricies)
 	{
-		for (int i = 0; i < testSubject.filterSize * testSubject.filterSize; ++i)
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
 		{
-			cout << testSubject.filter[i] << " ";
+			cout << testSubject.m_Filter[i] << " ";
 
 			counter++;
 
-			if (counter == testSubject.filterSize + 1)
+			if (counter == testSubject.m_FilterSize + 1)
 			{
 				cout << endl;
 				counter = 1;
@@ -220,13 +220,13 @@ void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWi
 	cout << "Result from padding input" << endl;
 	if (printMatricies)
 	{
-		for (int i = 0; i < testSubject.paddedInputHeight * testSubject.paddedInputWidth; ++i)
+		for (int i = 0; i < testSubject.m_PaddedInputHeight * testSubject.m_PaddedInputWidth; ++i)
 		{
-			cout << testSubject.paddedInput[i] << " ";
+			cout << testSubject.m_PaddedInput[i] << " ";
 
 			counter++;
 
-			if (counter == testSubject.paddedInputWidth + 1)
+			if (counter == testSubject.m_PaddedInputWidth + 1)
 			{
 				cout << endl;
 				counter = 1;
