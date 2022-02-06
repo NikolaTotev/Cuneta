@@ -75,46 +75,46 @@ __global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputHeight,
 __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput, float* d_Output, int _fwdInputHeight, int _fwdInputWidth, int _backInputHeight, int _backInputWidth, int _backOutputHeight, int _backOutputWidth)
 {
 	//These define indecies for output matrix;
-	int backInputRowIndex = blockIdx.x;
-	int backInputColumnIndex = threadIdx.x;
+	int backInputRowIndex = blockIdx.x; ///OK
+	int backInputColumnIndex = threadIdx.x; ///OK
 
 	//Starts from "top left" of current block of pixels being processed
-	int fwdInputRowIndex = blockIdx.x * 2;
-	int fwdInputColumnIndex = threadIdx.x * 2;
+	int fwdInputRowIndex = blockIdx.x * 2; ///OK
+	int fwdInputColumnIndex = threadIdx.x * 2; ///OK
 
 
-	int backInputIndex = backInputRowIndex * _backInputWidth + backInputColumnIndex;
+	int backInputIndex = backInputRowIndex * _backInputWidth + backInputColumnIndex; ///OK
 
-	int fwdInputArrayIndex = fwdInputRowIndex * _fwdInputWidth + fwdInputColumnIndex;
+	int fwdInputArrayIndex = fwdInputRowIndex * _fwdInputWidth + fwdInputColumnIndex; ///OK
 
-	float currentMax = d_FwdInput[fwdInputArrayIndex];
-	float currentPixel;
-	int maxElementIndex = 0;
-	int var = 0;
+	float currentMax = d_FwdInput[fwdInputArrayIndex]; ///OK
+	float currentPixel; ///OK
+	int maxElementIndex = fwdInputArrayIndex; ///OK
+
 	for (int row = 0; row < 2; row++)
 	{
-		fwdInputColumnIndex = threadIdx.x * 2;
-		fwdInputRowIndex += row;
+		fwdInputColumnIndex = threadIdx.x * 2; ///OK
+		fwdInputRowIndex += row; ///OK
 
 
 		for (int col = 0; col < 2; col++)
 		{
-			fwdInputColumnIndex += col;
+			fwdInputColumnIndex += col; ///OK
 
-			fwdInputArrayIndex = fwdInputRowIndex * _fwdInputWidth + fwdInputColumnIndex;
+			fwdInputArrayIndex = fwdInputRowIndex * _fwdInputWidth + fwdInputColumnIndex; ///OK
 
-			currentPixel = d_FwdInput[fwdInputArrayIndex];
+			currentPixel = d_FwdInput[fwdInputArrayIndex]; ///OK
 
 			//NOTE the case currentPixel >= currentMax
-			if (currentPixel > currentMax)
+			if (currentPixel > currentMax) ///OK
 			{
 				maxElementIndex = fwdInputArrayIndex;
-				currentMax = currentPixel;
+				currentMax = currentPixel; ///OK
 			}
 		}
 
 	}
-
+	
 	d_Output[maxElementIndex] = d_BackpropInput[backInputIndex];
 };
 
@@ -150,8 +150,6 @@ void MaxPool::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPas
 	size_t totalOutPutPixelCount = m_OutputMatrixHeight * m_OutputMatrixWidth;
 	int inputByteCount = totalInputPixelCount * sizeof(float);
 	int outputByteCount = totalOutPutPixelCount * sizeof(float);
-	cout << "Input Pixel count " << totalInputPixelCount << endl;
-	cout << "Output Pixel count " << totalOutPutPixelCount << endl;
 
 	//Define pointers for deviceMemory locations
 	float* d_Input;
@@ -179,63 +177,53 @@ void MaxPool::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPas
 
 void MaxPool::BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth)
 {
-	m_BackpropInputMatrixHeight = backPassHeight;
-	m_BackpropInputMatrixWidth = backPassWidth;
+	m_BackpropInputMatrixHeight = backPassHeight; ///OK
+	m_BackpropInputMatrixWidth = backPassWidth; ///OK
 
-	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight * 2;
-	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth * 2;
+	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight * 2; ///OK
+	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth * 2; ///OK
 
-	int arrayLength = backPassHeight * backPassWidth;
-	size_t inputSize = arrayLength * sizeof(float);
+	int backpropInputArraySize = backPassHeight * backPassWidth; ///OK
+	size_t backpropInputArrayByteCount = backpropInputArraySize * sizeof(float); ///OK
 
-	m_InputMatrix = new float[arrayLength];
-	m_OutputMatrix = new float[m_OutputMatrixHeight * m_OutputMatrixWidth];
+	m_BackPropInputMatrix = new float[backpropInputArraySize]; ///OK
+	m_BackpropagationOutput= new float[m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth]; ///OK
 
-	memcpy(m_BackPropInputMatrix, backpropInput, inputSize);
+	memcpy(m_BackPropInputMatrix, backpropInput, backpropInputArrayByteCount); ///OK
 
+	size_t fwdInputPixelCount = m_InputMatrixHeight * m_InputMatrixWidth; ///OK
+	size_t backInputPixelCount = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth; ///OK
+	size_t totalOutPutPixelCount = m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth; ///OK
 
-	if (m_InputMatrixWidth % 2 != 0 || m_InputMatrixHeight % 2 != 0)
-	{
-		cout << "Current version of MaxPool does not support odd matrix sizes of type " << m_InputMatrixHeight << "x" << m_InputMatrixWidth << endl;
-		return;
-	}
-
-	size_t fwdInputPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
-	size_t backInputPixelCount = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth;
-	size_t totalOutPutPixelCount = m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth;
-
-	int fwdInputByteCount = fwdInputPixelCount * sizeof(float);
-	int backInputByteCount = backInputPixelCount * sizeof(float);
-	int outputByteCount = totalOutPutPixelCount * sizeof(float);
-
-	cout << "Input Pixel count " << backInputPixelCount << endl;
-	cout << "Output Pixel count " << totalOutPutPixelCount << endl;
+	int fwdInputByteCount = fwdInputPixelCount * sizeof(float); ///OK
+	int backInputByteCount = backInputPixelCount * sizeof(float); ///OK
+	int outputByteCount = totalOutPutPixelCount * sizeof(float); ///OK
 
 	//Define pointers for deviceMemory locations
-	float* d_FwdInput;
-	float* d_BackpropInput;
-	float* d_Output;
+	float* d_FwdInput; ///OK
+	float* d_BackpropInput; ///OK
+	float* d_Output; ///OK
 
 	//Allocate memory
-	cudaMalloc((void**)&d_FwdInput, fwdInputByteCount);
-	cudaMalloc((void**)&d_BackpropInput, backInputByteCount);
-	cudaMalloc((void**)&d_Output, outputByteCount);
+	cudaMalloc((void**)&d_FwdInput, fwdInputByteCount); ///OK
+	cudaMalloc((void**)&d_BackpropInput, backInputByteCount); ///OK
+	cudaMalloc((void**)&d_Output, outputByteCount); ///OK
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
-	cudaMemset((void*)d_Output, 0, outputByteCount);
+	cudaMemset((void*)d_Output, 0, outputByteCount); ///OK
 
-	cudaMemcpy(d_FwdInput, m_InputMatrix, fwdInputByteCount, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_BackpropInput, m_InputMatrix, backInputByteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_FwdInput, m_InputMatrix, fwdInputByteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_BackpropInput, m_BackPropInputMatrix, backInputByteCount, cudaMemcpyHostToDevice); ///OK
 
 	//Define block size and threads per block.
-	dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1);
-	dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);
+	dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
+	dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1); ///OK
 
 	BackpropMaxPoolKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_Output, m_InputMatrixHeight, m_InputMatrixWidth, m_BackpropInputMatrixHeight, m_BackpropInputMatrixWidth, m_BackpropOutputMatrixHeight, m_BackpropOutputMatrixWidth);
-	cudaDeviceSynchronize();
+	cudaDeviceSynchronize(); ///OK
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
-	cudaMemcpy(m_BackpropagationOutput, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
+	cudaMemcpy(m_BackpropagationOutput, d_Output, outputByteCount, cudaMemcpyDeviceToHost); ///OK
 }
 
 void MaxPool::UpdateModule()
