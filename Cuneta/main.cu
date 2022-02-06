@@ -12,8 +12,8 @@ int main()
 {
 
 	cout << "Cuneta is starting..." << endl;
-	int matrixHeight = 4;
-	int matrixWidth = 6;
+	int matrixHeight = 6;
+	int matrixWidth = 4;
 
 
 	//TestReLU(matrixWidth, matrixHeight, -1, 5, true); ///OK
@@ -22,8 +22,12 @@ int main()
 	//TestMaxPool(matrixWidth, matrixHeight, -1, 5, true); ///OK
 	//TestBackpropMaxPool(matrixWidth, matrixHeight, -1, 5, 2, 8, true); ///OK
 
-	TestConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
-	TestBackpropConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
+	//TestConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
+	//TestBackpropConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
+
+
+	//TestTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
+	TestBackpropTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
 
 	/*std::cout << input[0] << std::endl;
 	std::cout << input[1] << std::endl;

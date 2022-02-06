@@ -87,7 +87,6 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize)
 	m_PaddingSize = _paddingSize;
 
 	InitializeFilter();
-	PadInput();
 }
 
 
@@ -108,7 +107,7 @@ void TransposeConvolution::ForwardPass(float* forwardPassInput, int fwdPassHeigh
 
 	memcpy(m_InputMatrix, forwardPassInput, inputSize);
 
-
+	PadInput();
 
 	int rowShifts = m_OutputMatrixHeight;
 	int columnShifts = m_OutputMatrixWidth;
@@ -159,110 +158,102 @@ void TransposeConvolution::ForwardPass(float* forwardPassInput, int fwdPassHeigh
 
 void TransposeConvolution::BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth)
 {
-	m_BackpropInputMatrixHeight = backPassHeight;
-	m_BackpropInputMatrixWidth = backPassWidth;
+	m_BackpropInputMatrixHeight = backPassHeight; ///OK
+	m_BackpropInputMatrixWidth = backPassWidth; ///OK
 
-	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight - 2;
-	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth - 2;
+	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight - 2; ///OK
+	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth - 2; ///OK
 
-	int arrayLength = backPassHeight * backPassWidth;
-	size_t inputSize = arrayLength * sizeof(float);
+	int arrayLength = backPassHeight * backPassWidth; ///OK
+	size_t inputSize = arrayLength * sizeof(float); ///OK
 
-	m_BackPropInputMatrix = new float[arrayLength];
-	m_BackpropagationOutput = new float[m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth];
+	m_BackPropInputMatrix = new float[arrayLength]; ///OK
+	m_BackpropagationOutput = new float[m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth]; ///OK
 
-	memcpy(m_BackPropInputMatrix, backpropInput, inputSize);
+	memcpy(m_BackPropInputMatrix, backpropInput, inputSize); ///OK
 
 	//Main backprop
 
-	int rowShifts = m_BackpropOutputMatrixHeight;
-	int columnShifts = m_BackpropOutputMatrixWidth;
+	int rowShifts = m_BackpropOutputMatrixHeight; ///OK
+	int columnShifts = m_BackpropOutputMatrixWidth; ///OK
+	
+	dim3 blockGrid(rowShifts, 1, 1); ///OK
+	dim3 threads(columnShifts, 1, 1); ///OK
 
-	int elementsInInput = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth;
-	int elementsInOutput = m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth;
-	std::cout << "Number of row shifts " << rowShifts << std::endl;
-	std::cout << "Number of column shifts " << columnShifts << std::endl;
+	size_t inputElementCount = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth; ///OK
+	size_t filterMatrixElementCount = m_FilterSize * m_FilterSize; ///OK
+	size_t outputElementCount = m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth; ///OK
 
-	std::cout << "Input elements " << elementsInInput << std::endl;
-	std::cout << "Output elements" << elementsInOutput << std::endl;
+	int inputByteCount = inputElementCount * sizeof(float); ///OK
+	int filterByteCount = filterMatrixElementCount * sizeof(float); ///OK
+	int outputByteCount = outputElementCount * sizeof(float); ///OK
 
-	dim3 blockGrid(rowShifts, 1, 1);
-	dim3 threads(columnShifts, 1, 1);
-
-	size_t inputElementCount = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth;
-	size_t filterMatrixElementCount = m_FilterSize * m_FilterSize;
-	size_t outputElementCount = m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth;
-
-	int inputByteCount = inputElementCount * sizeof(float);
-	int filterByteCount = filterMatrixElementCount * sizeof(float);
-	int outputByteCount = outputElementCount * sizeof(float);
-
-	std::cout << "Input element count " << inputElementCount << std::endl;
-	std::cout << "Filter element count " << filterMatrixElementCount << std::endl;
-	std::cout << "Output element count " << outputByteCount << std::endl;
+	FlipFilter();  ///OK
 
 	//Define pointers for deviceMemory locations
-	float* d_Input;
-	float* d_Filter;
-	float* d_Output;
+	float* d_Input; ///OK
+	float* d_Filter; ///OK
+	float* d_Output; ///OK
 
 
 	//Allocate memory
-	cudaMalloc((void**)&d_Input, inputByteCount);
-	cudaMalloc((void**)&d_Filter, filterByteCount);
-	cudaMalloc((void**)&d_Output, outputByteCount);
+	cudaMalloc((void**)&d_Input, inputByteCount); ///OK
+	cudaMalloc((void**)&d_Filter, filterByteCount); ///OK
+	cudaMalloc((void**)&d_Output, outputByteCount); ///OK
 
 
 	//Copy m_Filter into global device memory m_InputMatrix -> d_Input
-	cudaMemcpy(d_Input, m_BackPropInputMatrix, inputByteCount, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_Filter, m_FlippedFilter, filterByteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_Input, m_BackPropInputMatrix, inputByteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_Filter, m_FlippedFilter, filterByteCount, cudaMemcpyHostToDevice); ///OK
 
-	TransposeConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_BackpropOutputMatrixWidth, m_BackpropInputMatrixWidth, m_FilterSize, m_FilterSize);
-	cudaDeviceSynchronize();
+	TransposeConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_BackpropOutputMatrixWidth, m_BackpropInputMatrixWidth, m_FilterSize, m_FilterSize); ///OK
+	cudaDeviceSynchronize(); ///OK
+
+	cudaMemcpy(m_BackpropagationOutput, d_Output, outputByteCount, cudaMemcpyDeviceToHost); ///OK
+
+	//Filter backprop
+	FilterBackprop(backpropInput, backPassHeight, backPassWidth); ///OK
 
 	cudaFree(d_Input);
 	cudaFree(d_Filter);
 	cudaFree(d_Output);
-
-	cudaMemcpy(m_BackpropagationOutput, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
-
-	//Filter backprop
-	FilterBackprop(backpropInput, backPassHeight, backPassWidth);
 }
 
 void TransposeConvolution::FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth)
 {
-	size_t fwdInputElementCount = m_PaddedInputHeight * m_PaddedInputWidth;
-	size_t filterEqivElementCount = m_OutputMatrixHeight * m_OutputMatrixWidth;
-	size_t  filterOutputElementCount = m_FilterSize * m_FilterSize;
+	size_t fwdInputElementCount = m_PaddedInputHeight * m_PaddedInputWidth;  ///OK
+	size_t filterEqivElementCount = m_OutputMatrixHeight * m_OutputMatrixWidth; ///OK
+	size_t  filterOutputElementCount = m_FilterSize * m_FilterSize; ///OK
 
-	int fwdInputByteCount = fwdInputElementCount * sizeof(float);
-	int filterEqivByteCount = filterEqivElementCount * sizeof(float);
-	int filterOutputByteCount = filterOutputElementCount * sizeof(float);
+	int fwdInputByteCount = fwdInputElementCount * sizeof(float); ///OK
+	int filterEqivByteCount = filterEqivElementCount * sizeof(float); ///OK
+	int filterOutputByteCount = filterOutputElementCount * sizeof(float); ///OK
 
-	float* d_FwdInput;
-	float* d_FilterEquiv;
-	float* d_FilterOutput;
+	m_FilterBackpropResult = new float[filterOutputElementCount];
+
+	float* d_FwdInput; ///OK
+	float* d_FilterEquiv; ///OK
+	float* d_FilterOutput; ///OK
 
 	//Allocate memory
-	cudaMalloc((void**)&d_FwdInput, fwdInputByteCount);
-	cudaMalloc((void**)&d_FilterEquiv, filterEqivByteCount);
-	cudaMalloc((void**)&d_FilterOutput, filterOutputByteCount);
+	cudaMalloc((void**)&d_FwdInput, fwdInputByteCount); ///OK
+	cudaMalloc((void**)&d_FilterEquiv, filterEqivByteCount); ///OK
+	cudaMalloc((void**)&d_FilterOutput, filterOutputByteCount); ///OK
 
 	//Copy m_Filter into global device memory m_InputMatrix -> d_Input
-	cudaMemcpy(d_FwdInput, m_PaddedInput, fwdInputByteCount, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_FilterEquiv, m_OutputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_FwdInput, m_PaddedInput, fwdInputByteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_FilterEquiv, m_OutputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice); ///OK
 
-	int rowShifts = m_FilterSize;
-	int columnShifts = m_FilterSize;
+	int rowShifts = m_FilterSize; ///OK
+	int columnShifts = m_FilterSize; ///OK
 
-	dim3 blockGrid(rowShifts, 1, 1);
-	dim3 threads(columnShifts, 1, 1);
+	dim3 blockGrid(rowShifts, 1, 1); ///OK
+	dim3 threads(columnShifts, 1, 1); ///OK
 
 	TransposeConvolutionKernel << <blockGrid, threads >> > (d_FwdInput, d_FilterEquiv, d_FilterOutput, m_FilterSize, m_PaddedInputWidth, m_OutputMatrixHeight, m_OutputMatrixWidth);
 	cudaDeviceSynchronize();
 
-	cudaMemcpy(m_FilterBackpropResult, d_FilterOutput, filterOutputByteCount, cudaMemcpyDeviceToHost);
+	cudaMemcpy(m_FilterBackpropResult, d_FilterOutput, filterOutputByteCount, cudaMemcpyDeviceToHost); ///OK
 }
 
 
@@ -338,6 +329,19 @@ void TransposeConvolution::InitializeFilter()
 
 	for (int i = 0; i < m_FilterSize * m_FilterSize; ++i)
 	{
-		m_Filter[i] = i + 1;//distribution(gen);
+		m_Filter[i] = distribution(gen);
+	}
+}
+
+void TransposeConvolution::FlipFilter()
+{
+	int filterArraySize = m_FilterSize * m_FilterSize;
+	m_FlippedFilter = new float[filterArraySize];
+
+	int k = 0;
+
+	//Loop from back and assign value to new array
+	for (int i = filterArraySize - 1; i >= 0; ) {
+		m_FlippedFilter[k++] = m_Filter[i--];
 	}
 }
