@@ -42,8 +42,7 @@ __global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputHeight,
 	int inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
 
 	float currentMax = d_Input[inputArrayIndex];
-	float currentPixel = 555;
-	int var = 0;
+	float currentPixel;
 	for (int row = 0; row < 2; row++)
 	{
 		inputColumnIndex = threadIdx.x * 2;
