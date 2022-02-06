@@ -12,38 +12,12 @@ int main()
 {
 
 	cout << "Cuneta is starting..." << endl;
-	int matrixHeight = 6;
-	int matrixWidth = 4;
-	int vectorizedMatrixSize = matrixWidth * matrixHeight;
-	float* input = new float[vectorizedMatrixSize];
-	float* groundTruth = new float[vectorizedMatrixSize];
-	float* output = new float[vectorizedMatrixSize];
+	int matrixHeight = 4;
+	int matrixWidth = 6;
+	
 
-	string inputPath = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\Ingester_Ground_Truth_Test.txt";
-	string groundTruthPath = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\Ingester_Input_Test.txt";
-
-
-	int max = 10;
-	int min = 0;
-	int range = max - min + 1;
-
-	for (int i = 0; i < matrixHeight * matrixWidth; ++i)
-	{
-		input[i] = rand() % range + min;
-		//std::cout << input[i] << std::endl;
-	}
-
-	max = 1;
-	min = 0;
-	range = max - min + 1;
-
-	for (int i = 0; i < matrixHeight * matrixWidth; ++i)
-	{
-		groundTruth[i] = rand() % range + min;
-		//std::cout << input[i] << std::endl;
-	}
-
-	//TestReLU(input, output, matrixWidth, matrixHeight);
+	TestReLU(matrixWidth, matrixHeight, -1, 5, true); ///OK
+	TestBackpropReLU(matrixWidth, matrixHeight, -1, 5, 2, 8 ,true); ///OK
 
 	/*std::cout << input[0] << std::endl;
 	std::cout << input[1] << std::endl;
@@ -63,7 +37,7 @@ int main()
 	//TestTransposeConvolution(input, matrixHeight, matrixWidth, 3, true);
 	//TestErrorCalcModule(input, groundTruth, matrixHeight, matrixWidth, true);
 
-	TestImageIngester(inputPath, groundTruthPath, true);
+	//TestImageIngester(inputPath, groundTruthPath, true);
 
 	return 0;
 }

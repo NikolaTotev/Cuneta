@@ -10,400 +10,532 @@
 #include "TransposeConvolution.cuh"
 using namespace std;
 
-void TestReLU(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight)
+void TestReLU(int inputMatrixWidth, int inputMatrixHeight, int minInputVal, int maxInputVal, bool printMatricies)
 {
 	cout << "Starting ReLU Test" << endl;
-	cout << "Original matrix:" << endl;
-	int rowCounter = 0;
-	/*for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+
+	size_t inputVectorizedSize = (size_t)inputMatrixWidth * (size_t)inputMatrixHeight;
+	float* input = new float[inputVectorizedSize];
+
+
+	int max = maxInputVal;
+	int min = minInputVal;
+	int range = max - min + 1;
+
+	for (int i = 0; i < inputMatrixHeight * inputMatrixWidth; i++)
 	{
-		cout << inputMatrix[i] << " ";
-		rowCounter++;
-		if (rowCounter == 15)
-		{
-			cout << endl;
-			rowCounter = 0;
-		}
+		input[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
 	}
-	cout << endl;*/
 
-	ReLU testSubject = ReLU(inputMatrix, outputMatrix, matrixHeight, matrixHeight, matrixWidth, matrixWidth);
-
-	cout << "Starting forward pass test." << endl;
-	testSubject.ForwardPass();
-
-	cout << "Matrix after ReLU:" << endl;
-	rowCounter = 0;
-
-	testSubject.m_OutputMatrix[2];
-
-	/*for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-	{
-		cout << testSubject.m_OutputMatrix[i] << " ";
-		rowCounter++;
-		if (rowCounter == 15)
-		{
-			cout << endl;
-			rowCounter = 0;
-		}
-	}
-	cout << endl;*/
-}
-
-void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight, bool printMatricies)
-{
-	cout << "Starting MaxPool Test" << endl;
+	int rowCounter = 1;
 	cout << "Original matrix:" << endl;
-	int counter = 1;
-	if (printMatricies) {
-
-		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+	if (printMatricies)
+	{
+		for (size_t i = 0; i < inputMatrixWidth * inputMatrixHeight; i++)
 		{
-			cout << inputMatrix[i] << " ";
-			counter++;
-			if (counter == matrixWidth + 1)
+			float x = input[i];
+			cout << input[i] << " ";
+			rowCounter++;
+			if (rowCounter == inputMatrixWidth+1)
 			{
 				cout << endl;
-				counter = 1;
+				rowCounter = 1;
 			}
-
 		}
+		cout << endl;
 	}
-	cout << endl;
 
-	MaxPool testSubject = MaxPool(inputMatrix, matrixHeight, matrixWidth);
+	ReLU testSubject = ReLU();
 
-	cout << "Starting forward pass test." << endl;
-	testSubject.ForwardPass();
+	cout << "Starting forward pass." << endl;
+	testSubject.ForwardPass(input, inputMatrixHeight, inputMatrixWidth);
 
-	cout << "Matrix after MaxPool:" << endl;
+	cout << "ReLU output:" << endl;
 
-	counter = 1;
-	if (printMatricies) {
-		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+	cout << "Output dimensions (Height/Width): " << testSubject.m_OutputMatrixHeight << "/" << testSubject.m_OutputMatrixWidth << endl;
+
+	cout << "Output matrix:" << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < inputMatrixWidth * inputMatrixHeight; ++i)
 		{
 			cout << testSubject.m_OutputMatrix[i] << " ";
-			counter++;
-
-			if (counter == testSubject.m_OutputMatrixWidth + 1)
+			rowCounter++;
+			if (rowCounter == testSubject.m_OutputMatrixWidth+1)
 			{
 				cout << endl;
-				counter = 1;
+				rowCounter = 1;
 			}
 		}
+		cout << endl;
 	}
-	cout << endl;
-	cout << testSubject.m_OutputMatrix[0] << " ";
+
+	cout << "ReLU test complete!" << endl;
+
+	delete[] input;
 }
 
-
-void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
+void TestBackpropReLU(int inputMatrixWidth, int inputMatrixHeight, int fwdMinInputVal, int fwdMaxInputVal, int backMinInputVal, int backMaxInputVal, bool printMatricies)
 {
-	cout << "Starting Convolution Test" << endl;
-	cout << "Original matrix:" << endl;
+	cout << "Starting Backprop ReLU Test" << endl;
 
-	int counter = 1;
+	int inputVectorizedSize = inputMatrixHeight * inputMatrixWidth;
+	float* fwdInput = new float[inputVectorizedSize];
+	float* backInput = new float[inputVectorizedSize];
 
-	if (printMatricies)
+	//Initialize dummy forward input;
+	int min = fwdMinInputVal;
+	int max = fwdMaxInputVal;
+	int range = max - min + 1;
+
+	for (int i = 0; i < inputMatrixHeight * inputMatrixWidth; ++i)
 	{
-		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-		{
-			cout << inputMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == matrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-
+		fwdInput[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
 	}
 
-	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
+	//Initialize backprop input;
+	min = backMinInputVal;
+	max = backMaxInputVal;
+	range = max - min + 1;
 
-	cout << "Generated m_Filter:" << endl;
-
-	if (printMatricies)
+	for (int i = 0; i < inputMatrixHeight * inputMatrixWidth; ++i)
 	{
-		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
-		{
-			cout << testSubject.m_Filter[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_FilterSize + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-
-		cout << endl;
+		backInput[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
 	}
 
-	cout << "Starting forward pass test" << endl;
-
-	testSubject.ForwardPass();
-
-	counter = 1;
-
+	int rowCounter = 1;
+	cout << "Forward input matrix:" << endl;
 	if (printMatricies)
 	{
-		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+		for (int i = 0; i < inputMatrixWidth * inputMatrixHeight; ++i)
 		{
-			cout << testSubject.m_OutputMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_OutputMatrixWidth + 1)
+			cout << fwdInput[i] << " ";
+			rowCounter++;
+			if (rowCounter == inputMatrixWidth + 1)
 			{
 				cout << endl;
-				counter = 1;
+				rowCounter = 1;
 			}
 		}
 		cout << endl;
 	}
-	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
+
+	cout << "Backprop input matrix:" << endl;
+
+	rowCounter = 1;
+	if (printMatricies)
+	{
+		for (int i = 0; i < inputMatrixWidth * inputMatrixHeight; ++i)
+		{
+			cout << backInput[i] << " ";
+			rowCounter++;
+			if (rowCounter == inputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	ReLU testSubject = ReLU();
+
+	cout << "Starting backward pass." << endl;
+	testSubject.ForwardPass(fwdInput, inputMatrixHeight, inputMatrixWidth);
+
+	cout << "Starting backward pass." << endl;
+	testSubject.BackwardPass(backInput, inputMatrixHeight, inputMatrixWidth);
+
+	cout << "ReLU backprop output:" << endl;
+
+	cout << "Backprop Output dimensions (Height/Width): " << testSubject.m_BackpropOutputMatrixHeight << "/" << testSubject.m_BackpropOutputMatrixWidth << endl;
+
+	cout << "Backprop Output matrix:" << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < inputMatrixWidth * inputMatrixHeight; ++i)
+		{
+			cout << testSubject.m_BackpropagationOutput[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_BackpropOutputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << "Backpropagation ReLU test complete!" << endl;
+	delete[] fwdInput;
+	delete[] backInput;
 }
 
 
-void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
-{
-	cout << "Starting Transpose Convolution Test" << endl;
-	cout << "Original matrix:" << endl;
-
-	int counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-		{
-			cout << inputMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == matrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-
-	}
-
-	TransposeConvolution testSubject = TransposeConvolution(inputMatrix, matrixHeight, matrixWidth, filterSize, 2);
-
-	cout << "Generated m_Filter:" << endl;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
-		{
-			cout << testSubject.m_Filter[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_FilterSize + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-
-		cout << endl;
-	}
-
-	cout << "Result from padding input" << endl;
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_PaddedInputHeight * testSubject.m_PaddedInputWidth; ++i)
-		{
-			cout << testSubject.m_PaddedInput[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_PaddedInputWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-
-		cout << endl;
-	}
-
-	cout << "Starting forward pass test" << endl;
-
-	testSubject.ForwardPass();
-
-	counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
-		{
-			cout << testSubject.m_OutputMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_OutputMatrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
-}
-
-
-void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matrixHeight, int matrixWidth, bool printMatricies)
-{
-	cout << "Starting Error Calc Test" << endl;
-	cout << "Original matrix:" << endl;
-
-	int counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-		{
-			cout << inputMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == matrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-
-	cout << "Ground truth matrix:" << endl;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-		{
-			cout << groundTruthMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == matrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-
-	}
-
-	ErrorCalcModule testSubject = ErrorCalcModule(inputMatrix, groundTruthMatrix, matrixHeight, matrixWidth);
-
-	testSubject.PixelWiseSigmoid();
-
-	cout << "Sigmoid result:" << endl;
-	counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
-		{
-			cout << testSubject.sigmoidResultMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_InputMatrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-
-		cout << endl;
-	}
-
-	testSubject.PixelWiseCrossEntropy();
-	cout << "Cross entropy result: " << endl;
-	counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
-		{
-			cout << testSubject.crossEntropyResultMatrix[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.m_InputMatrixWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-
-		cout << endl;
-	}
-
-	cout << "Network error: " << endl;
-
-	testSubject.CrossEntropySum();
-
-	counter = 1;
-
-	if (printMatricies)
-	{
-		for (int i = 0; i < testSubject.m_OutputMatrixHeight; ++i)
-		{
-			cout << testSubject.intermediateSumResult[i] << " ";
-		}
-		cout << endl;
-	}
-	cout << "Error calc module test complete." << endl;
-}
-
-
-void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies)
-{
-	ImageIngester testSubject = ImageIngester(inputPath, groundTruthPath);
-	testSubject.ReadData();
-
-	if (printMatricies)
-	{
-		int counter = 1;
-		for (int i = 0; i < testSubject.inputHeight * testSubject.inputWidth; ++i)
-		{
-			cout << testSubject.inputImageData[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.inputWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		
-		counter = 1;
-		for (int i = 0; i < testSubject.groundTruthHeight * testSubject.groundTruthWidth; ++i)
-		{
-			cout << testSubject.groundTruthData[i] << " ";
-
-			counter++;
-
-			if (counter == testSubject.groundTruthWidth + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-	}
-}
+//void TestMaxPool(float* inputMatrix, float* outputMatrix, int matrixWidth, int matrixHeight, bool printMatricies)
+//{
+//	cout << "Starting MaxPool Test" << endl;
+//	cout << "Original matrix:" << endl;
+//	int counter = 1;
+//	if (printMatricies) {
+//
+//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+//		{
+//			cout << inputMatrix[i] << " ";
+//			counter++;
+//			if (counter == matrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//
+//		}
+//	}
+//	cout << endl;
+//
+//	MaxPool testSubject = MaxPool(inputMatrix, matrixHeight, matrixWidth);
+//
+//	cout << "Starting forward pass test." << endl;
+//	testSubject.ForwardPass();
+//
+//	cout << "Matrix after MaxPool:" << endl;
+//
+//	counter = 1;
+//	if (printMatricies) {
+//		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+//		{
+//			cout << testSubject.m_OutputMatrix[i] << " ";
+//			counter++;
+//
+//			if (counter == testSubject.m_OutputMatrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//	}
+//	cout << endl;
+//	cout << testSubject.m_OutputMatrix[0] << " ";
+//}
+//
+//
+//void TestConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
+//{
+//	cout << "Starting Convolution Test" << endl;
+//	cout << "Original matrix:" << endl;
+//
+//	int counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+//		{
+//			cout << inputMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == matrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//
+//	}
+//
+//	Convolution testSubject = Convolution(inputMatrix, matrixHeight, matrixWidth, filterSize);
+//
+//	cout << "Generated m_Filter:" << endl;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+//		{
+//			cout << testSubject.m_Filter[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_FilterSize + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//
+//		cout << endl;
+//	}
+//
+//	cout << "Starting forward pass test" << endl;
+//
+//	testSubject.ForwardPass();
+//
+//	counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+//		{
+//			cout << testSubject.m_OutputMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_OutputMatrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//	}
+//	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
+//}
+//
+//
+//void TestTransposeConvolution(float* inputMatrix, int matrixHeight, int matrixWidth, int filterSize, bool printMatricies)
+//{
+//	cout << "Starting Transpose Convolution Test" << endl;
+//	cout << "Original matrix:" << endl;
+//
+//	int counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+//		{
+//			cout << inputMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == matrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//
+//	}
+//
+//	TransposeConvolution testSubject = TransposeConvolution(inputMatrix, matrixHeight, matrixWidth, filterSize, 2);
+//
+//	cout << "Generated m_Filter:" << endl;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+//		{
+//			cout << testSubject.m_Filter[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_FilterSize + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//
+//		cout << endl;
+//	}
+//
+//	cout << "Result from padding input" << endl;
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_PaddedInputHeight * testSubject.m_PaddedInputWidth; ++i)
+//		{
+//			cout << testSubject.m_PaddedInput[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_PaddedInputWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//
+//		cout << endl;
+//	}
+//
+//	cout << "Starting forward pass test" << endl;
+//
+//	testSubject.ForwardPass();
+//
+//	counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_OutputMatrixHeight * testSubject.m_OutputMatrixWidth; ++i)
+//		{
+//			cout << testSubject.m_OutputMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_OutputMatrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//	}
+//	cout << "First item in convolution result: " << testSubject.m_OutputMatrix[0] << endl;
+//}
+//
+//
+//void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matrixHeight, int matrixWidth, bool printMatricies)
+//{
+//	cout << "Starting Error Calc Test" << endl;
+//	cout << "Original matrix:" << endl;
+//
+//	int counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+//		{
+//			cout << inputMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == matrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//	}
+//
+//	cout << "Ground truth matrix:" << endl;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
+//		{
+//			cout << groundTruthMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == matrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		cout << endl;
+//
+//	}
+//
+//	ErrorCalcModule testSubject = ErrorCalcModule(inputMatrix, groundTruthMatrix, matrixHeight, matrixWidth);
+//
+//	testSubject.PixelWiseSigmoid();
+//
+//	cout << "Sigmoid result:" << endl;
+//	counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
+//		{
+//			cout << testSubject.sigmoidResultMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_InputMatrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//
+//		cout << endl;
+//	}
+//
+//	testSubject.PixelWiseCrossEntropy();
+//	cout << "Cross entropy result: " << endl;
+//	counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
+//		{
+//			cout << testSubject.crossEntropyResultMatrix[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.m_InputMatrixWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//
+//		cout << endl;
+//	}
+//
+//	cout << "Network error: " << endl;
+//
+//	testSubject.CrossEntropySum();
+//
+//	counter = 1;
+//
+//	if (printMatricies)
+//	{
+//		for (int i = 0; i < testSubject.m_OutputMatrixHeight; ++i)
+//		{
+//			cout << testSubject.intermediateSumResult[i] << " ";
+//		}
+//		cout << endl;
+//	}
+//	cout << "Error calc module test complete." << endl;
+//}
+//
+//
+//void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies)
+//{
+//	ImageIngester testSubject = ImageIngester(inputPath, groundTruthPath);
+//	testSubject.ReadData();
+//
+//	if (printMatricies)
+//	{
+//		int counter = 1;
+//		for (int i = 0; i < testSubject.inputHeight * testSubject.inputWidth; ++i)
+//		{
+//			cout << testSubject.inputImageData[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.inputWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//		
+//		counter = 1;
+//		for (int i = 0; i < testSubject.groundTruthHeight * testSubject.groundTruthWidth; ++i)
+//		{
+//			cout << testSubject.groundTruthData[i] << " ";
+//
+//			counter++;
+//
+//			if (counter == testSubject.groundTruthWidth + 1)
+//			{
+//				cout << endl;
+//				counter = 1;
+//			}
+//		}
+//	}
+//}

@@ -39,19 +39,19 @@ __global__ void ReLUKernel(float* d_Input, float* d_Output, int matrixWidth)
 
 __global__ void BackpropReLUKernel(float* d_BackpropInput, float* d_FwdInput, float* d_BackpropOutput, int matrixWidth)
 {
-	int rowIndex = blockIdx.x;
-	int columnIndex = threadIdx.x;
-	int arrayIndex = rowIndex * matrixWidth + columnIndex;
-	float fwdInputPixel = d_FwdInput[arrayIndex];
-	float backpropInputPixel = d_BackpropInput[arrayIndex];
+	int rowIndex = blockIdx.x; ///OK
+	int columnIndex = threadIdx.x;///OK
+	int arrayIndex = rowIndex * matrixWidth + columnIndex; ///OK
+	float fwdInputPixel = d_FwdInput[arrayIndex];///OK
+	float backpropInputPixel = d_BackpropInput[arrayIndex];///OK
 
-	float ReLUResult = 0;
+	float ReLUResult = 0; ///OK
 	if (fwdInputPixel > 0)
 	{
 		ReLUResult = 1 * backpropInputPixel;
 	}
 
-	d_BackpropOutput[arrayIndex] = ReLUResult;
+	d_BackpropOutput[arrayIndex] = ReLUResult;///OK
 }
 
 ReLU::ReLU()
@@ -106,47 +106,46 @@ void ReLU::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWi
 void ReLU::BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth)
 {
 
-	int arrayLength = backPassHeight * backPassWidth;
-	size_t inputSize = arrayLength * sizeof(float);
+	int arrayLength = backPassHeight * backPassWidth; ///OK
+	size_t inputSize = arrayLength * sizeof(float); ///OK
 
-	m_BackpropInputMatrixHeight = backPassHeight;
-	m_BackpropInputMatrixWidth = backPassWidth;
+	m_BackpropInputMatrixHeight = backPassHeight; ///OK
+	m_BackpropInputMatrixWidth = backPassWidth; ///OK
 
-	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight;
-	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth;
+	m_BackpropOutputMatrixHeight = m_BackpropInputMatrixHeight;///OK
+	m_BackpropOutputMatrixWidth = m_BackpropInputMatrixWidth;///OK
 
-	m_BackPropInputMatrix = new float[arrayLength];
-	m_BackpropagationOutput = new float[arrayLength];
+	m_BackPropInputMatrix = new float[arrayLength];///OK
+	m_BackpropagationOutput = new float[arrayLength];///OK
 
-	memcpy(m_BackpropagationOutput, backpropInput, inputSize);
+	memcpy(m_BackPropInputMatrix, backpropInput, inputSize); ///OK
 
-	size_t totalPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
-	int byteCount = totalPixelCount * sizeof(float);
-	std::cout << "Pixel count " << totalPixelCount;
+	size_t totalPixelCount = m_BackpropInputMatrixHeight * m_BackpropInputMatrixWidth; ///OK
+	int byteCount = totalPixelCount * sizeof(float); ///OK
 
 	//Define pointers for deviceMemory locations
-	float* d_BackpropInput;
-	float* d_FwdInput;
-	float* d_Output;
+	float* d_FwdInput; ///OK
+	float* d_BackpropInput; ///OK
+	float* d_Output; ///OK
 
 	//Allocate memory
-	cudaMalloc((void**)&d_BackpropInput, byteCount);
-	cudaMalloc((void**)&d_FwdInput, byteCount);
-	cudaMalloc((void**)&d_Output, byteCount);
+	cudaMalloc((void**)&d_FwdInput, byteCount); ///OK
+	cudaMalloc((void**)&d_BackpropInput, byteCount);///OK
+	cudaMalloc((void**)&d_Output, byteCount);///OK
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
-	cudaMemcpy(d_BackpropInput, m_BackPropInputMatrix, byteCount, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_FwdInput, m_InputMatrix, byteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_BackpropInput, m_BackPropInputMatrix, byteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_FwdInput, m_InputMatrix, byteCount, cudaMemcpyHostToDevice); ///OK
 
 	//Define block size and threads per block.
-	dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1);
-	dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);
+	dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
+	dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);///OK
 
-	BackpropReLUKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_Output, m_InputMatrixWidth);
-	cudaDeviceSynchronize();
+	BackpropReLUKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_Output, m_InputMatrixWidth); ///OK
+	cudaDeviceSynchronize();///OK
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
-	cudaMemcpy(m_BackpropagationOutput, d_Output, byteCount, cudaMemcpyDeviceToHost);
+	cudaMemcpy(m_BackpropagationOutput, d_Output, byteCount, cudaMemcpyDeviceToHost);///OK
 }
 
 void ReLU::UpdateModule()

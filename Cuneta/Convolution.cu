@@ -60,7 +60,7 @@ __global__ void ConvolutionKernel(float* d_Input, float* d_Filter, float* d_Outp
 	d_Output[outputArrayIndex] = result;
 };
 
-__global__ void PaddingKernel(float* d_UnpaddedInput, float* d_Output, int _paddedInputWidth, int _unpaddedInputWidth, int _unpaddedInputHeight)
+__global__ void ConvolutionPaddingKernel(float* d_UnpaddedInput, float* d_Output, int _paddedInputWidth, int _unpaddedInputWidth, int _unpaddedInputHeight)
 {
 	int rowWriteIndex = (blockIdx.x + 1) * 2 + threadIdx.x;
 	int columnWriteIndex = 2;
@@ -298,7 +298,7 @@ void Convolution::PadBackpropInput()
 	dim3 blockGrid(numberOfBlocks, 1, 1);
 	dim3 threads(2, 1, 1);
 
-	PaddingKernel << <blockGrid, threads >> > (d_UnpaddedInput, d_Output, m_PaddedInputWidth, m_BackpropInputMatrixWidth, m_BackpropInputMatrixHeight);
+	ConvolutionPaddingKernel << <blockGrid, threads >> > (d_UnpaddedInput, d_Output, m_PaddedInputWidth, m_BackpropInputMatrixWidth, m_BackpropInputMatrixHeight);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(m_PaddedBackpropInput, d_Output, outputByteCount, cudaMemcpyDeviceToHost);

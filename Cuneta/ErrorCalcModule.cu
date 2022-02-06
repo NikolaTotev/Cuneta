@@ -88,7 +88,7 @@ ErrorCalcModule::ErrorCalcModule(float* _inputMatrix, float* _groundTruth, int _
 	m_OutputMatrix = new float[m_OutputMatrixHeight * m_OutputMatrixWidth];
 }
 
-void ErrorCalcModule::ForwardPass()
+void ErrorCalcModule::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth)
 {
 	PixelWiseSigmoid();
 	PixelWiseCrossEntropy();
@@ -203,7 +203,7 @@ void ErrorCalcModule::CrossEntropySum()
 
 
 
-void ErrorCalcModule::BackwardPass()
+void ErrorCalcModule::BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth)
 {
 
 }
