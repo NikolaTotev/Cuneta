@@ -871,7 +871,7 @@ void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeigh
 {
 	cout << endl;
 	cout << endl;
-	cout << "Starting Backprop MaxPool Test" << endl;
+	cout << "Starting Backprop Transpose convolution Test" << endl;
 
 	int inputVectorizedSize = inputMatrixHeight * inputMatrixWidth;
 	int backpropInputVectorizedSize = (inputMatrixHeight+ 2) * (inputMatrixWidth + 2);
@@ -909,7 +909,7 @@ void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeigh
 		{
 			cout << fwdInput[i] << " ";
 			rowCounter++;
-			if (rowCounter == inputMatrixWidth + 1)
+			if (rowCounter == (inputMatrixWidth)+ 1)
 			{
 				cout << endl;
 				rowCounter = 1;
@@ -930,7 +930,7 @@ void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeigh
 		{
 			cout << backInput[i] << " ";
 			rowCounter++;
-			if (rowCounter == (inputMatrixWidth - 2) + 1)
+			if (rowCounter == (inputMatrixWidth + 2) + 1)
 			{
 				cout << endl;
 				rowCounter = 1;

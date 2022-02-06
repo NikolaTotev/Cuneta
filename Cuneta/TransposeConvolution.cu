@@ -114,11 +114,7 @@ void TransposeConvolution::ForwardPass(float* forwardPassInput, int fwdPassHeigh
 
 	int elementsInPaddedInput = m_PaddedInputHeight * m_PaddedInputWidth;
 	int elementsInOutput = m_OutputMatrixHeight * m_OutputMatrixWidth;
-	std::cout << "Number of row shifts " << rowShifts << std::endl;
-	std::cout << "Number of column shifts " << columnShifts << std::endl;
 
-	std::cout << "Input elements " << elementsInPaddedInput << std::endl;
-	std::cout << "Output elements" << elementsInOutput << std::endl;
 
 	dim3 blockGrid(rowShifts, 1, 1);
 	dim3 threads(columnShifts, 1, 1);
@@ -130,9 +126,6 @@ void TransposeConvolution::ForwardPass(float* forwardPassInput, int fwdPassHeigh
 	int paddedInputByteCount = paddedInputElementCount * sizeof(float);
 	int filterByteCount = filterMatrixElementCount * sizeof(float);
 	int outputByteCount = outputElementCount * sizeof(float);
-	std::cout << "Input element count " << paddedInputElementCount << std::endl;
-	std::cout << "Filter element count " << filterMatrixElementCount << std::endl;
-	std::cout << "Output element count " << outputByteCount << std::endl;
 
 	//Define pointers for deviceMemory locations
 	float* d_Input;
@@ -242,7 +235,7 @@ void TransposeConvolution::FilterBackprop(float* backpropInput, int backPassHeig
 
 	//Copy m_Filter into global device memory m_InputMatrix -> d_Input
 	cudaMemcpy(d_FwdInput, m_PaddedInput, fwdInputByteCount, cudaMemcpyHostToDevice); ///OK
-	cudaMemcpy(d_FilterEquiv, m_OutputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_FilterEquiv, m_BackPropInputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice); ///OK
 
 	int rowShifts = m_FilterSize; ///OK
 	int columnShifts = m_FilterSize; ///OK
@@ -310,7 +303,7 @@ void TransposeConvolution::PadInput()
 	cudaMemcpy(d_Output, m_PaddedInput, unpaddedInputByteCount, cudaMemcpyHostToDevice);
 
 	int numberOfBlocks = m_InputMatrixHeight / 2;
-	cout << "Launching blocks: " << numberOfBlocks << endl;
+
 	dim3 blockGrid(numberOfBlocks, 1, 1);
 	dim3 threads(2, 1, 1);
 
