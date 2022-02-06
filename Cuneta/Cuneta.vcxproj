@@ -78,23 +78,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="Convolution.cu" />
+    <CudaCompile Include="Cuneta.cu" />
     <CudaCompile Include="ErrorCalcModule.cu" />
     <CudaCompile Include="ImageIngester.cu" />
+    <CudaCompile Include="Logger.cu" />
     <CudaCompile Include="main.cu" />
     <CudaCompile Include="MaxPool.cu" />
     <CudaCompile Include="ReLU.cu" />
     <CudaCompile Include="Test_Utils.cu" />
+    <CudaCompile Include="Trainer.cu" />
     <CudaCompile Include="TransposeConvolution.cu" />
     <CudaCompile Include="Utilities.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Convolution.cuh" />
+    <ClInclude Include="Cuneta.cuh" />
     <ClInclude Include="CunetaModule.cuh" />
     <ClInclude Include="ErrorCalcModule.cuh" />
     <ClInclude Include="ImageIngester.cuh" />
+    <ClInclude Include="Logger.cuh" />
     <ClInclude Include="MaxPool.cuh" />
     <ClInclude Include="ReLU.cuh" />
     <ClInclude Include="Test_Utils.cuh" />
+    <ClInclude Include="Trainer.cuh" />
     <ClInclude Include="TransposeConvolution.cuh" />
     <ClInclude Include="Utilities.cuh" />
   </ItemGroup>
