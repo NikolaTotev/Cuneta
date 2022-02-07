@@ -5,10 +5,14 @@
 #include "Convolution.cuh"
 #include "ErrorCalcModule.cuh"
 #include "ImageIngester.cuh"
+#include "Logger.cuh"
 #include "MaxPool.cuh"
 #include "ReLU.cuh"
 #include "TransposeConvolution.cuh"
 using namespace std;
+
+string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files";
+string imageName = "Ingester_Ground_Truth_Test";
 
 void TestReLU(int inputMatrixWidth, int inputMatrixHeight, int minInputVal, int maxInputVal, bool printMatricies)
 {
@@ -250,6 +254,8 @@ void TestMaxPool(int inputMatrixWidth, int inputMatrixHeight, int minInputVal, i
 
 void TestBackpropMaxPool(int inputMatrixWidth, int inputMatrixHeight, int fwdMinInputVal, int fwdMaxInputVal, int backMinInputVal, int backMaxInputVal, bool printMatricies)
 {
+	CunetaLogger loggy = CunetaLogger();
+
 	cout << "Starting Backprop MaxPool Test" << endl;
 
 	int inputVectorizedSize = inputMatrixHeight * inputMatrixWidth;
@@ -367,7 +373,7 @@ void TestBackpropMaxPool(int inputMatrixWidth, int inputMatrixHeight, int fwdMin
 		}
 		cout << endl;
 	}
-
+	loggy.LogMaxPoolState(testSubject, directory, imageName, 1);
 	cout << "Backpropagation MaxPool test complete!" << endl << endl;
 	delete[] fwdInput;
 	delete[] backInput;
@@ -486,6 +492,8 @@ void TestConvolution(int inputMatrixWidth, int inputMatrixHeight, int minInputVa
 
 void TestBackpropConvolution(int inputMatrixWidth, int inputMatrixHeight, int fwdMinInputVal, int fwdMaxInputVal, int backMinInputVal, int backMaxInputVal, int filterSize, int paddingSize, bool printMatricies)
 {
+	CunetaLogger loggy = CunetaLogger();
+
 	cout << endl;
 	cout << endl;
 	cout << "Starting Backprop MaxPool Test" << endl;
@@ -726,7 +734,7 @@ void TestBackpropConvolution(int inputMatrixWidth, int inputMatrixHeight, int fw
 	cout << endl << ">>>>>>>>>>>>>>>> NEXT TEST >>>>>>>>>>>>>>>>";
 	cout << endl << ">>>>>>>>>>>>>>>> NEXT TEST >>>>>>>>>>>>>>>>";
 	
-	
+	loggy.LogConvolutionState(testSubject, directory, imageName, 1);
 	delete[] fwdInput;
 	delete[] backInput;
 }
@@ -869,6 +877,7 @@ void TestTransposeConvolution(int inputMatrixWidth, int inputMatrixHeight, int m
 
 void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeight, int fwdMinInputVal, int fwdMaxInputVal, int backMinInputVal, int backMaxInputVal, int filterSize, int paddingSize, bool printMatricies)
 {
+	CunetaLogger loggy = CunetaLogger();
 	cout << endl;
 	cout << endl;
 	cout << "Starting Backprop Transpose convolution Test" << endl;
@@ -1111,7 +1120,7 @@ void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeigh
 	cout << endl << ">>>>>>>>>>>>>>>> NEXT TEST >>>>>>>>>>>>>>>>";
 	cout << endl << ">>>>>>>>>>>>>>>> NEXT TEST >>>>>>>>>>>>>>>>";
 
-
+	loggy.LogTransposeConvolutionState(testSubject, directory, imageName, 1);
 	delete[] fwdInput;
 	delete[] backInput;
 }
