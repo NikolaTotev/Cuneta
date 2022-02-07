@@ -22,4 +22,5 @@ public:
 	void LogTransposeConvolutionState(TransposeConvolution transposeConvolutionToSave, string outputDirectory, string imageName, int iteration);
 	void LogErrorState(ErrorCalcModule errorModuleToSave, string outputDirectory, string imageName, int iteration);
 	void AddErrorScore(float scoreToAdd);
+	void AddImageNameToProcessingHistory(string outputDirectory, string imagePath);
 };
