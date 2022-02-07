@@ -1126,150 +1126,207 @@ void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeigh
 }
 
 
-//
-//
-//void TestErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matrixHeight, int matrixWidth, bool printMatricies)
-//{
-//	cout << "Starting Error Calc Test" << endl;
-//	cout << "Original matrix:" << endl;
-//
-//	int counter = 1;
-//
-//	if (printMatricies)
-//	{
-//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-//		{
-//			cout << inputMatrix[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == matrixWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//		cout << endl;
-//	}
-//
-//	cout << "Ground truth matrix:" << endl;
-//
-//	if (printMatricies)
-//	{
-//		for (int i = 0; i < matrixWidth * matrixHeight; ++i)
-//		{
-//			cout << groundTruthMatrix[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == matrixWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//		cout << endl;
-//
-//	}
-//
-//	ErrorCalcModule testSubject = ErrorCalcModule(inputMatrix, groundTruthMatrix, matrixHeight, matrixWidth);
-//
-//	testSubject.PixelWiseSigmoid();
-//
-//	cout << "Sigmoid result:" << endl;
-//	counter = 1;
-//
-//	if (printMatricies)
-//	{
-//		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
-//		{
-//			cout << testSubject.sigmoidResultMatrix[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == testSubject.m_InputMatrixWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//
-//		cout << endl;
-//	}
-//
-//	testSubject.PixelWiseCrossEntropy();
-//	cout << "Cross entropy result: " << endl;
-//	counter = 1;
-//
-//	if (printMatricies)
-//	{
-//		for (int i = 0; i < testSubject.m_InputMatrixWidth * testSubject.m_InputMatrixHeight; ++i)
-//		{
-//			cout << testSubject.crossEntropyResultMatrix[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == testSubject.m_InputMatrixWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//
-//		cout << endl;
-//	}
-//
-//	cout << "Network error: " << endl;
-//
-//	testSubject.CrossEntropySum();
-//
-//	counter = 1;
-//
-//	if (printMatricies)
-//	{
-//		for (int i = 0; i < testSubject.m_OutputMatrixHeight; ++i)
-//		{
-//			cout << testSubject.intermediateSumResult[i] << " ";
-//		}
-//		cout << endl;
-//	}
-//	cout << "Error calc module test complete." << endl;
-//}
-//
-//
-//void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies)
-//{
-//	ImageIngester testSubject = ImageIngester(inputPath, groundTruthPath);
-//	testSubject.ReadData();
-//
-//	if (printMatricies)
-//	{
-//		int counter = 1;
-//		for (int i = 0; i < testSubject.inputHeight * testSubject.inputWidth; ++i)
-//		{
-//			cout << testSubject.inputImageData[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == testSubject.inputWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//		
-//		counter = 1;
-//		for (int i = 0; i < testSubject.groundTruthHeight * testSubject.groundTruthWidth; ++i)
-//		{
-//			cout << testSubject.groundTruthData[i] << " ";
-//
-//			counter++;
-//
-//			if (counter == testSubject.groundTruthWidth + 1)
-//			{
-//				cout << endl;
-//				counter = 1;
-//			}
-//		}
-//	}
-//}
+
+
+void TestBackpropErrorCalcModule(int inputMatrixWidth, int inputMatrixHeight, int rawMinInput, int rawMaxInput, int groundTruthMinInput, int groundTruthMaxInput, bool printMatricies)
+{
+	CunetaLogger loggy = CunetaLogger();
+
+	cout << "Starting Backprop MaxPool Test" << endl;
+
+	int inputVectorizedSize = inputMatrixHeight * inputMatrixWidth;
+	int backpropInputVectorizedSize = (inputMatrixHeight) * (inputMatrixWidth);
+	float* fwdInput = new float[inputVectorizedSize];
+	float* backInput = new float[backpropInputVectorizedSize];
+
+	//Initialize dummy forward input;
+	int min = rawMinInput;
+	int max = rawMaxInput;
+	int range = max - min + 1;
+
+	for (int i = 0; i < inputMatrixHeight * inputMatrixWidth; ++i)
+	{
+		fwdInput[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
+	}
+
+	//Initialize backprop input;
+	min = groundTruthMinInput;
+	max = groundTruthMaxInput;
+	range = max - min + 1;
+
+	for (int i = 0; i < backpropInputVectorizedSize; ++i)
+	{
+		backInput[i] = rand() % range + min;
+		//std::cout << input[i] << std::endl;
+	}
+
+	int rowCounter = 1;
+	cout << "Raw input matrix:" << endl;
+	cout << endl;
+	if (printMatricies)
+	{
+		for (int i = 0; i < inputVectorizedSize; ++i)
+		{
+			cout << fwdInput[i] << " ";
+			rowCounter++;
+			if (rowCounter == inputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "Ground truth input matrix:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+	if (printMatricies)
+	{
+		for (int i = 0; i < backpropInputVectorizedSize; ++i)
+		{
+			cout << backInput[i] << " ";
+			rowCounter++;
+			if (rowCounter == (inputMatrixWidth) + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	ErrorCalcModule testSubject = ErrorCalcModule(fwdInput, backInput, inputMatrixHeight, inputMatrixWidth);
+
+	cout << "Starting forward pass." << endl;
+
+	testSubject.ForwardPass(fwdInput, inputMatrixHeight, inputMatrixWidth);
+
+	cout << "Forward pass output:" << endl;
+	cout << "Output dimensions (Height/Width): " << testSubject.m_OutputMatrixHeight << "/" << testSubject.m_OutputMatrixWidth << endl;
+	cout << "Sigmoid matrix:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+	if (printMatricies) {
+		for (int i = 0; i < testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth; ++i)
+		{
+			cout << testSubject.sigmoidResultMatrix[i] << " ";
+			rowCounter++;
+
+			if (rowCounter == testSubject.m_InputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+
+
+	cout << "Output dimensions (Height/Width): " << testSubject.m_OutputMatrixHeight << "/" << testSubject.m_OutputMatrixWidth << endl;
+	cout << "Cross entropy result matrix:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+	if (printMatricies) {
+		for (int i = 0; i < testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth; ++i)
+		{
+			cout << testSubject.crossEntropyResultMatrix[i] << " ";
+			rowCounter++;
+
+			if (rowCounter == testSubject.m_InputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "Network error:" << endl;
+
+	cout << testSubject.networkError << endl;
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "Output dimensions (Height/Width): " << testSubject.m_OutputMatrixHeight << "/" << testSubject.m_OutputMatrixWidth << endl;
+	cout << "Gradient matrix:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+	if (printMatricies) {
+		for (int i = 0; i < testSubject.m_InputMatrixHeight * testSubject.m_InputMatrixWidth; ++i)
+		{
+			cout << testSubject.dLdXMatrix[i] << " ";
+			rowCounter++;
+
+			if (rowCounter == testSubject.m_InputMatrixWidth + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+	
+	delete[] fwdInput;
+	delete[] backInput;
+}
+
+
+void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies)
+{
+	ImageIngester testSubject = ImageIngester();
+	//testSubject.ReadData();
+
+	if (printMatricies)
+	{
+		int counter = 1;
+		for (int i = 0; i < testSubject.inputHeight * testSubject.inputWidth; ++i)
+		{
+			cout << testSubject.inputImageData[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.inputWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		
+		counter = 1;
+		for (int i = 0; i < testSubject.groundTruthHeight * testSubject.groundTruthWidth; ++i)
+		{
+			cout << testSubject.groundTruthData[i] << " ";
+
+			counter++;
+
+			if (counter == testSubject.groundTruthWidth + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+	}
+}
