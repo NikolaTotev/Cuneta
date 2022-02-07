@@ -6,6 +6,8 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
+
+#include "Logger.cuh"
 #include "Test_Utils.cuh"
 using namespace std;
 int main()
@@ -14,8 +16,42 @@ int main()
 	cout << "Cuneta is starting..." << endl;
 	int matrixHeight = 6;
 	int matrixWidth = 4;
+	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files";
+	string imageName = "Ingester_Ground_Truth_Test";
 
+	ReLU test = ReLU();
 
+	//int inputVectorizedSize = matrixHeight * matrixWidth;
+	//float* fwdInput = new float[inputVectorizedSize];
+	//float* backInput = new float[inputVectorizedSize];
+
+	////Initialize dummy forward input;
+	//int min = -1;
+	//int max = 5;
+	//int range = max - min + 1;
+
+	//for (int i = 0; i < matrixHeight * matrixWidth; ++i)
+	//{
+	//	fwdInput[i] = rand() % range + min;
+	//	std::cout << fwdInput[i] << std::endl;
+	//}
+
+	////Initialize backprop input;
+	//min = 2;
+	//max = 8;
+	//range = max - min + 1;
+
+	//for (int i = 0; i < matrixHeight * matrixWidth; ++i)
+	//{
+	//	backInput[i] = rand() % range + min;
+	//	std::cout << backInput[i] << std::endl;
+	//}
+
+	//test.ForwardPass(fwdInput, matrixHeight, matrixWidth);
+	//test.BackwardPass(backInput, matrixHeight, matrixWidth);
+	
+	//CunetaLogger loggy = CunetaLogger();
+	//loggy.LogReLUState(test, directory, imageName, 1);
 	//TestReLU(matrixWidth, matrixHeight, -1, 5, true); ///OK
 	//TestBackpropReLU(matrixWidth, matrixHeight, -1, 5, 2, 8 ,true); ///OK
 
