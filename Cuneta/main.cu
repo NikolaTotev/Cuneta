@@ -23,18 +23,18 @@ int main()
 
 	ReLU test = ReLU();
 
-	CunetaFolderManager folderManager = CunetaFolderManager(directory);
-	folderManager.GetAllFoldersInDirectory();
-	CunetaLogger loggy = CunetaLogger();
-	ImageIngester ingester = ImageIngester();
+	//CunetaFolderManager folderManager = CunetaFolderManager(directory);
+	//folderManager.GetAllFoldersInDirectory();
+	//CunetaLogger loggy = CunetaLogger();
+	//ImageIngester ingester = ImageIngester();
 
-	for (int i = 0; i < folderManager.totalFolders; ++i)
-	{
-		ingester.ReadData(folderManager.currentFolder, folderManager.currentImageName);
-		loggy.AddImageNameToProcessingHistory(directory, folderManager.currentImageName);
-		folderManager.OpenNextFolder();
+	//for (int i = 0; i < folderManager.totalFolders; ++i)
+	//{
+	//	ingester.ReadData(folderManager.currentFolder, folderManager.currentImageName);
+	//	loggy.AddImageNameToProcessingHistory(directory, folderManager.currentImageName);
+	//	folderManager.OpenNextFolder();
 
-	}
+	//}
 
 
 	//int inputVectorizedSize = matrixHeight * matrixWidth;
@@ -97,7 +97,7 @@ int main()
 	//TestConvolution(input, matrixHeight, matrixWidth, 3, true);
 
 	//TestTransposeConvolution(input, matrixHeight, matrixWidth, 3, true);
-	//TestErrorCalcModule(input, groundTruth, matrixHeight, matrixWidth, true);
+	TestBackpropErrorCalcModule(matrixHeight, matrixWidth, -1, 3, 0,1 , true);
 
 	//TestImageIngester(inputPath, groundTruthPath, true);
 
