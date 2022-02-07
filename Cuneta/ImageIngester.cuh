@@ -19,8 +19,8 @@ public:
 	float* inputImageData;
 	float* groundTruthData;
 
-	ImageIngester(string _inputPath, string _groundTruthPath);
-	void ReadData();
+	ImageIngester();
+	void ReadData(string _currentFolder, string _currentImageName);
 		
 };
 
