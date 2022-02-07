@@ -1,4 +1,4 @@
-#include "ImageIngester.cuh";
+#include "ImageIngester.cuh"
 
 #include <fstream>
 #include <iostream>
@@ -14,7 +14,6 @@ ImageIngester::ImageIngester(string _inputPath, string _groundTruthPath)
 
 void ImageIngester::ReadData()
 {
-
 	ifstream inFile;
 	inFile.open(inputPath);
 
