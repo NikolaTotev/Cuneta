@@ -5,15 +5,27 @@
 
 using namespace std;
 
-ImageIngester::ImageIngester(string _inputPath, string _groundTruthPath)
+ImageIngester::ImageIngester()
 {
-	inputPath = _inputPath;
-	groundTruthPath = _groundTruthPath;
 }
 
 
-void ImageIngester::ReadData()
+void ImageIngester::ReadData(string _currentFolder, string _currentImageName)
 {
+	inputPath = "";
+	inputPath += _currentFolder;
+	inputPath += "\\";
+	inputPath += "VECTORIZED_INPUT_";
+	inputPath += _currentImageName;
+	inputPath += ".txt";
+
+	groundTruthPath = "";
+	groundTruthPath += _currentFolder;
+	groundTruthPath += "\\";
+	groundTruthPath += "VECTORIZED_LABELED_";
+	groundTruthPath += _currentImageName;
+	groundTruthPath += ".txt";
+
 	ifstream inFile;
 	inFile.open(inputPath);
 
@@ -27,6 +39,7 @@ void ImageIngester::ReadData()
 		for (int i = 0; i < inputHeight * inputWidth; i++)
 		{
 			inFile >> inputImageData[i];
+			cout << inputImageData[i] << " ";
 			inputSize++;
 		}
 
@@ -50,6 +63,7 @@ void ImageIngester::ReadData()
 		for (int i = 0; i < groundTruthHeight * groundTruthWidth; i++)
 		{
 			inFile >> groundTruthData[i];
+			cout << groundTruthData[i] << " ";
 			inputSize++;
 		}
 
