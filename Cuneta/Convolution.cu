@@ -237,7 +237,7 @@ void Convolution::FilterBackprop(float* backpropInput, int backPassHeight, int b
 
 	//Copy m_Filter into global device memory m_InputMatrix -> d_Input
 	cudaMemcpy(d_FwdInput, m_InputMatrix, fwdInputByteCount, cudaMemcpyHostToDevice); ///OK
-	cudaMemcpy(d_FilterEquiv, m_OutputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice); ///OK
+	cudaMemcpy(d_FilterEquiv, m_BackPropInputMatrix, filterEqivByteCount, cudaMemcpyHostToDevice); ///OK
 
 	int rowShifts = m_FilterSize; ///OK
 	int columnShifts = m_FilterSize; ///OK
