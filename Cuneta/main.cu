@@ -7,6 +7,8 @@
 #include "device_launch_parameters.h"
 #include <stdio.h>
 
+#include "FolderManager.cuh"
+#include "ImageIngester.cuh"
 #include "Logger.cuh"
 #include "Test_Utils.cuh"
 using namespace std;
@@ -16,10 +18,24 @@ int main()
 	cout << "Cuneta is starting..." << endl;
 	int matrixHeight = 6;
 	int matrixWidth = 4;
-	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files";
+	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\processed_data";
 	string imageName = "Ingester_Ground_Truth_Test";
 
 	ReLU test = ReLU();
+
+	CunetaFolderManager folderManager = CunetaFolderManager(directory);
+	folderManager.GetAllFoldersInDirectory();
+	CunetaLogger loggy = CunetaLogger();
+	ImageIngester ingester = ImageIngester();
+
+	for (int i = 0; i < folderManager.totalFolders; ++i)
+	{
+		ingester.ReadData(folderManager.currentFolder, folderManager.currentImageName);
+		loggy.AddImageNameToProcessingHistory(directory, folderManager.currentImageName);
+		folderManager.OpenNextFolder();
+
+	}
+
 
 	//int inputVectorizedSize = matrixHeight * matrixWidth;
 	//float* fwdInput = new float[inputVectorizedSize];
@@ -63,7 +79,7 @@ int main()
 
 
 	//TestTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
-	TestBackpropTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
+	//TestBackpropTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
 
 	/*std::cout << input[0] << std::endl;
 	std::cout << input[1] << std::endl;
