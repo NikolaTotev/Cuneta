@@ -386,3 +386,37 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 	output.close();
 }
 
+void CunetaLogger::AddImageNameToProcessingHistory(string outputDirectory,string imagePath)
+{
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "ProcessingHistory";
+	logFilePath += ".cunetalog";
+
+	std::ofstream outfile;
+
+	bool logFileExists;
+	ifstream file(logFilePath);
+	if (file)            
+		logFileExists = true;    
+	else                 
+		logFileExists = false;
+	file.close();
+
+	if(logFileExists)
+	{
+		outfile.open(logFilePath, std::ios_base::app); // append instead of overwrite
+	}
+	else{
+		outfile.open(logFilePath);
+	}
+
+	outfile << imagePath << endl;
+	outfile.close();
+
+
+
+}
+
+
