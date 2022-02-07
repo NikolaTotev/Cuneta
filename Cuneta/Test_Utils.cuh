@@ -15,6 +15,6 @@ void TestBackpropConvolution(int inputMatrixWidth, int inputMatrixHeight, int fw
 void TestTransposeConvolution(int inputMatrixWidth, int inputMatrixHeight, int minInputVal, int maxInputVal, int filterSize, int paddingSize, bool printMatricies);
 void TestBackpropTransposeConvolution(int inputMatrixWidth, int inputMatrixHeight, int fwdMinInputVal, int fwdMaxInputVal, int backMinInputVal, int backMaxInputVal, int filterSize, int paddingSize, bool printMatricies);
 
-void TestErrorCalcModule();
-void TestBackpropErrorCalcModule(float* inputMatrix, float* groundTruthMatrix, int matrixHeight, int matrixWidth, bool printMatricies);
+void TestBackpropErrorCalcModule(int inputMatrixWidth, int inputMatrixHeight, int rawMinInput, int rawMaxInput, int groundTruthMinInput, int groundTruthMaxInput, bool printMatricies);
+
 void TestImageIngester(string inputPath, string groundTruthPath, bool printMatricies);
