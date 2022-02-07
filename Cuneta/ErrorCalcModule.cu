@@ -35,17 +35,27 @@ __global__ void PixelWiseSigmoidKernel(float* d_Input, float* d_Output, int matr
 	d_Output[arrayIndex] = SigmoidResult;
 };
 
-__global__ void GradientKernel(float* d_PredictedProbabilityMatrix, float* dCrossEntropy_dRawInput, int matrixWidth)
+__global__ void GradientKernel(float* d_PredictedProbabilityMatrix, float* dCrossEntropy_dRawInput, float* groundTruth, int matrixWidth)
 {
 	int rowIndex = blockIdx.x;
 	int columnIndex = threadIdx.x;
 	int arrayIndex = rowIndex * matrixWidth + columnIndex;
 	float predictedProbability = d_PredictedProbabilityMatrix[arrayIndex];
 
-	float dCrossEntropy_dPredictedProbability = -1/predictedProbability;
+	float dCrossEntropy_dPredictedProbability = -1 / predictedProbability;
+
+	/*if(groundTruth[arrayIndex] == 0)
+	{
+		dCrossEntropy_dPredictedProbability = predictedProbability-1;
+
+	}
+	else{
+		dCrossEntropy_dPredictedProbability = predictedProbability;
+	}*/
+
 	float dPredictedProbablity_dRawInput = predictedProbability * (1 - predictedProbability);
 
-	dCrossEntropy_dRawInput[arrayIndex] = dCrossEntropy_dPredictedProbability*dPredictedProbablity_dRawInput;
+	dCrossEntropy_dRawInput[arrayIndex] = dCrossEntropy_dPredictedProbability * dPredictedProbablity_dRawInput;
 }
 
 __global__ void PixelWiseCrossEntropyKernel(float* d_Input, float* d_Output, float* d_GroundTruthMatrix, int matrixWidth)
@@ -64,10 +74,10 @@ __global__ void PixelWiseCrossEntropyKernel(float* d_Input, float* d_Output, flo
 	}
 
 
-	d_Output[arrayIndex] = -log(correctedPixel + 0.000001);
+	d_Output[arrayIndex] = -log(correctedPixel);
 };
 
-__global__ void LevelCrossEntropySumKernel(float* d_Input, float* d_Output, int matrixWidth, int matrixHeight)
+__global__ void CrossEntropySumKernel(float* d_Input, float* d_Output, int matrixWidth, int matrixHeight)
 {
 	int blockStart = blockIdx.x * 2;
 	int rowNumber = blockStart + threadIdx.x;
@@ -75,17 +85,19 @@ __global__ void LevelCrossEntropySumKernel(float* d_Input, float* d_Output, int 
 
 	float sum = 0;
 
-	for (int i = 0; i < matrixHeight; ++i)
+	for (int i = 0; i < matrixWidth; ++i)
 	{
 		sum += d_Input[arrayIndex];
 		arrayIndex++;
 	}
-
+	if (blockIdx.x == 0 && threadIdx.x == 1)
+	{
+		//	d_Output[0] = arrayIndex;
+	}
 	d_Output[rowNumber] = sum;
 
 
 };
-__global__ void GradientGenerationKernel(float* d_Input, float* d_Output) {};
 
 
 ErrorCalcModule::ErrorCalcModule(float* _inputMatrix, float* _groundTruth, int _inputHeight, int _inputWidth)
@@ -106,13 +118,13 @@ void ErrorCalcModule::ForwardPass(float* forwardPassInput, int fwdPassHeight, in
 	PixelWiseSigmoid();
 	PixelWiseCrossEntropy();
 	CrossEntropySum();
+	CalculateGradient();
 }
 
 void ErrorCalcModule::PixelWiseSigmoid()
 {
 	size_t totalPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
 	int byteCount = totalPixelCount * sizeof(float);
-	std::cout << "Pixel count " << totalPixelCount << endl;
 
 	sigmoidResultMatrix = new float[totalPixelCount];
 
@@ -142,7 +154,6 @@ void ErrorCalcModule::PixelWiseCrossEntropy()
 {
 	size_t totalPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
 	int byteCount = totalPixelCount * sizeof(float);
-	std::cout << "Pixel count " << totalPixelCount << endl;
 
 	crossEntropyResultMatrix = new float[totalPixelCount];
 
@@ -185,7 +196,6 @@ void ErrorCalcModule::CrossEntropySum()
 	size_t inputPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
 	int inputByteCount = inputPixelCount * sizeof(float);
 	int outputByteCount = m_InputMatrixHeight * sizeof(float);
-	std::cout << "Pixel count " << inputPixelCount << endl;
 
 	float* d_Input;
 	float* d_Output;
@@ -199,7 +209,7 @@ void ErrorCalcModule::CrossEntropySum()
 	dim3 blockGrid(blockCount, 1, 1);
 	dim3 threadGrid(2, 1, 1);
 
-	LevelCrossEntropySumKernel << <blockGrid, threadGrid >> > (d_Input, d_Output, m_InputMatrixWidth,m_InputMatrixHeight);
+	CrossEntropySumKernel << <blockGrid, threadGrid >> > (d_Input, d_Output, m_InputMatrixWidth, m_InputMatrixHeight);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(intermediateSumResult, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
@@ -209,8 +219,8 @@ void ErrorCalcModule::CrossEntropySum()
 	for (int i = 0; i < m_InputMatrixHeight; ++i)
 	{
 		networkError += intermediateSumResult[i];
+		cout << intermediateSumResult[i] << " ";
 	}
-	cout << "Network error " << networkError << endl;
 }
 
 void ErrorCalcModule::CalculateGradient()
@@ -218,26 +228,28 @@ void ErrorCalcModule::CalculateGradient()
 
 	size_t totalPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
 	int byteCount = totalPixelCount * sizeof(float);
-	std::cout << "Pixel count " << totalPixelCount << endl;
 
-	dLdXMatrix= new float[totalPixelCount];
+	dLdXMatrix = new float[totalPixelCount];
 
 	//Define pointers for deviceMemory locations
 	float* d_predictedProb;
 	float* d_dLdX;
+	float* d_GroundTruth;
 
 	//Allocate memory
 	cudaMalloc((void**)&d_predictedProb, byteCount);
 	cudaMalloc((void**)&d_dLdX, byteCount);
+	cudaMalloc((void**)&d_GroundTruth, byteCount);
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
 	cudaMemcpy(d_predictedProb, sigmoidResultMatrix, byteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_GroundTruth, groundTruthMatrix, byteCount, cudaMemcpyHostToDevice);
 
 	//Define block size and threads per block.
 	dim3 blockGrid(m_InputMatrixHeight, 1, 1);
 	dim3 threadGrid(m_InputMatrixWidth, 1, 1);
 
-	GradientKernel << <blockGrid, threadGrid >> > (d_predictedProb, d_dLdX, m_InputMatrixWidth);
+	GradientKernel << <blockGrid, threadGrid >> > (d_predictedProb, d_dLdX, groundTruthMatrix, m_InputMatrixWidth);
 	cudaDeviceSynchronize();
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
