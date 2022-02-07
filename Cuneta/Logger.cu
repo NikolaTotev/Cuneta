@@ -386,6 +386,12 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 	output.close();
 }
 
+void CunetaLogger::LogErrorState(ErrorCalcModule errorModuleToSave, string outputDirectory, string imageName, int iteration)
+{
+	
+}
+
+
 void CunetaLogger::AddImageNameToProcessingHistory(string outputDirectory,string imagePath)
 {
 	string logFilePath;
