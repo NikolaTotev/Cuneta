@@ -6,3 +6,9 @@
 #include "TransposeConvolution.cuh"
 
 
+class Cuneta
+{
+	void Train(string dataDirectory, string logDirectory);
+	void Segment(string inputImage, string logDirectory);
+	void Save(string savePath);
+};
