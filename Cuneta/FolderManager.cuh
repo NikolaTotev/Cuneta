@@ -1,13 +1,19 @@
 
 #include <string>
+#include <vector>
 using namespace std;
 class CunetaFolderManager
 {
 public:
 	int totalFolders;
-	int currentFolder;
+	int currentFolderIndex;
+	string currentFolder;
+	string currentImageName;
 	string dataDirectory;
-	CunetaFolderManager(string dataDirectory);
+	vector<std::string> directoryList;
+	
+	CunetaFolderManager(string _dataDirectory);
 	void GetAllFoldersInDirectory();
-	void GetNextFolder();
+	void OpenNextFolder();
+	void UpdateImageName();
 };
