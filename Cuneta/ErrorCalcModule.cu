@@ -35,6 +35,19 @@ __global__ void PixelWiseSigmoidKernel(float* d_Input, float* d_Output, int matr
 	d_Output[arrayIndex] = SigmoidResult;
 };
 
+__global__ void GradientKernel(float* d_PredictedProbabilityMatrix, float* dCrossEntropy_dRawInput, int matrixWidth)
+{
+	int rowIndex = blockIdx.x;
+	int columnIndex = threadIdx.x;
+	int arrayIndex = rowIndex * matrixWidth + columnIndex;
+	float predictedProbability = d_PredictedProbabilityMatrix[arrayIndex];
+
+	float dCrossEntropy_dPredictedProbability = -1/predictedProbability;
+	float dPredictedProbablity_dRawInput = predictedProbability * (1 - predictedProbability);
+
+	dCrossEntropy_dRawInput[arrayIndex] = dCrossEntropy_dPredictedProbability*dPredictedProbablity_dRawInput;
+}
+
 __global__ void PixelWiseCrossEntropyKernel(float* d_Input, float* d_Output, float* d_GroundTruthMatrix, int matrixWidth)
 {
 	int rowIndex = blockIdx.x;
@@ -200,6 +213,36 @@ void ErrorCalcModule::CrossEntropySum()
 	cout << "Network error " << networkError << endl;
 }
 
+void ErrorCalcModule::CalculateGradient()
+{
+
+	size_t totalPixelCount = m_InputMatrixHeight * m_InputMatrixWidth;
+	int byteCount = totalPixelCount * sizeof(float);
+	std::cout << "Pixel count " << totalPixelCount << endl;
+
+	dLdXMatrix= new float[totalPixelCount];
+
+	//Define pointers for deviceMemory locations
+	float* d_predictedProb;
+	float* d_dLdX;
+
+	//Allocate memory
+	cudaMalloc((void**)&d_predictedProb, byteCount);
+	cudaMalloc((void**)&d_dLdX, byteCount);
+
+	//Copy memory into global device memory m_InputMatrix -> d_Input
+	cudaMemcpy(d_predictedProb, sigmoidResultMatrix, byteCount, cudaMemcpyHostToDevice);
+
+	//Define block size and threads per block.
+	dim3 blockGrid(m_InputMatrixHeight, 1, 1);
+	dim3 threadGrid(m_InputMatrixWidth, 1, 1);
+
+	GradientKernel << <blockGrid, threadGrid >> > (d_predictedProb, d_dLdX, m_InputMatrixWidth);
+	cudaDeviceSynchronize();
+
+	//Copy back result into host memory d_Output -> m_OutputMatrix
+	cudaMemcpy(dLdXMatrix, d_dLdX, byteCount, cudaMemcpyDeviceToHost);
+}
 
 
 
