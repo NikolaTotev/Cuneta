@@ -1,3 +1,4 @@
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\algorithm
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\atomic
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\cctype
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Tools\MSVC\14.29.30133\include\cerrno
@@ -147,6 +148,7 @@ D:\Documents\Project Files\Cuneta\Cuneta\Convolution.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\CunetaModule.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ErrorCalcModule.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ImageIngester.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\Logger.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\MaxPool.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ReLU.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\Test_Utils.cuh

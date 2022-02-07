@@ -144,6 +144,11 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include\texture_types.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include\vector_functions.h
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include\vector_functions.hpp
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include\vector_types.h
+D:\Documents\Project Files\Cuneta\Cuneta\Convolution.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\CunetaModule.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\ErrorCalcModule.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\Logger.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\MaxPool.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\ReLU.cuh
 D:\Documents\Project Files\Cuneta\Cuneta\Test_Utils.cuh
+D:\Documents\Project Files\Cuneta\Cuneta\TransposeConvolution.cuh
