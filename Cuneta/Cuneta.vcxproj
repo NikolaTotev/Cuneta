@@ -80,6 +80,7 @@
     <CudaCompile Include="Convolution.cu" />
     <CudaCompile Include="Cuneta.cu" />
     <CudaCompile Include="ErrorCalcModule.cu" />
+    <CudaCompile Include="FolderManager.cu" />
     <CudaCompile Include="ImageIngester.cu" />
     <CudaCompile Include="Logger.cu" />
     <CudaCompile Include="main.cu" />
@@ -95,6 +96,7 @@
     <ClInclude Include="Cuneta.cuh" />
     <ClInclude Include="CunetaModule.cuh" />
     <ClInclude Include="ErrorCalcModule.cuh" />
+    <ClInclude Include="FolderManager.cuh" />
     <ClInclude Include="ImageIngester.cuh" />
     <ClInclude Include="Logger.cuh" />
     <ClInclude Include="MaxPool.cuh" />
