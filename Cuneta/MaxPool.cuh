@@ -11,9 +11,11 @@
 class MaxPool : public CunetaModule
 {
 public:
-	MaxPool();
+	MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth);
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
+	void LayerForwardPass(float** _inputs) override;
+	void LayerBackwardPass(float** _backpropInput) override;
 	void UpdateModule() override;
 
 	//Input and output will be in global memory. d_ shows in which memory the variables are stored.
