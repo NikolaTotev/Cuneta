@@ -11,7 +11,7 @@
 class Convolution : public CunetaModule
 {
 public:
-	Convolution(int _filterSize, int _paddingSize);
+	Convolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth);
 	float* m_Filter;
 	float* m_FlippedFilter;
 	float* m_PaddedBackpropInput;
@@ -31,12 +31,17 @@ public:
 	int m_HyperParam_T;
 	float m_HyperParam_alpha;
 
+	float* testIt;
+
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth);
+	void LayerForwardPass(float** _inputs) override;
+	void LayerBackwardPass(float** _backpropInput) override;
 	void UpdateModule() override;
 	void Dialate(float* _input, float* _output);
 	void InitializeFilter();
+	void LayerFilterInitialization();
 	void FlipFilter();
 	void PadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
