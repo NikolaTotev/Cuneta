@@ -24,7 +24,7 @@
 #include "device_launch_parameters.h"
 using namespace std;
 
-__global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputHeight, int _inputWidth, int _outputHeight, int _outputWidth)
+__global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputWidth, int _outputWidth)
 {
 	//These define indecies for output matrix;
 	int outputRowIndex = blockIdx.x;
@@ -71,7 +71,7 @@ __global__ void MaxPoolKernel(float* d_Input, float* d_Output, int _inputHeight,
 };
 
 
-__global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput, float* d_Output, int _fwdInputHeight, int _fwdInputWidth, int _backInputHeight, int _backInputWidth, int _backOutputHeight, int _backOutputWidth)
+__global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput, float* d_Output, int _fwdInputWidth, int _backInputWidth)
 {
 	//These define indecies for output matrix;
 	int backInputRowIndex = blockIdx.x; ///OK
@@ -113,13 +113,35 @@ __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput,
 		}
 
 	}
-	
+
 	d_Output[maxElementIndex] = d_BackpropInput[backInputIndex];
 };
 
-MaxPool::MaxPool()
+MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth)
 {
+	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
+	L_FORWARD_NumerOf_OUTPUTS = _numberOfOutputs;
 
+	L_BACKWARD_NumberOf_INPUTS = L_FORWARD_NumerOf_OUTPUTS;
+	L_BACKWARD_NumberOf_OUTPUTS = L_FORWARD_NumberOf_INPUTS;
+
+	L_FORWARD_InputLayer_HEIGHT = _inputHeight;
+	L_FORWARD_InputLayer_WIDTH = _inputWidth;
+
+	L_FORWARD_OutputLayer_HEIGHT = _inputHeight / 2;
+	L_FORWARD_OutputLayer_WIDTH = _inputWidth / 2;
+
+	L_BACKWARD_InputLayer_HEIGHT = L_FORWARD_OutputLayer_HEIGHT;
+	L_BACKWARD_InputLayer_WIDTH = L_FORWARD_OutputLayer_WIDTH;
+
+	L_BACKWARD_OutputLayer_HEIGHT = L_FORWARD_InputLayer_HEIGHT;
+	L_BACKWARD_OutputLayer_WIDTH = L_FORWARD_InputLayer_WIDTH;
+
+	L_FORWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
+	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+
+	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
 }
 
 void MaxPool::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth)
@@ -167,7 +189,7 @@ void MaxPool::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPas
 	dim3 blockGrid(m_InputMatrixHeight / 2, 1, 1);
 	dim3 threadGrid(m_InputMatrixWidth / 2, 1, 1);
 
-	MaxPoolKernel << <blockGrid, threadGrid >> > (d_Input, d_Output, m_InputMatrixHeight, m_InputMatrixWidth, m_OutputMatrixHeight, m_OutputMatrixWidth);
+	MaxPoolKernel << <blockGrid, threadGrid >> > (d_Input, d_Output, m_InputMatrixWidth, m_OutputMatrixWidth);
 	cudaDeviceSynchronize();
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
@@ -186,7 +208,7 @@ void MaxPool::BackwardPass(float* backpropInput, int backPassHeight, int backPas
 	size_t backpropInputArrayByteCount = backpropInputArraySize * sizeof(float); ///OK
 
 	m_BackPropInputMatrix = new float[backpropInputArraySize]; ///OK
-	m_BackpropagationOutput= new float[m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth]; ///OK
+	m_BackpropagationOutput = new float[m_BackpropOutputMatrixHeight * m_BackpropOutputMatrixWidth]; ///OK
 
 	memcpy(m_BackPropInputMatrix, backpropInput, backpropInputArrayByteCount); ///OK
 
@@ -218,12 +240,105 @@ void MaxPool::BackwardPass(float* backpropInput, int backPassHeight, int backPas
 	dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
 	dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1); ///OK
 
-	BackpropMaxPoolKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_Output, m_InputMatrixHeight, m_InputMatrixWidth, m_BackpropInputMatrixHeight, m_BackpropInputMatrixWidth, m_BackpropOutputMatrixHeight, m_BackpropOutputMatrixWidth);
+	BackpropMaxPoolKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_Output, m_InputMatrixWidth,  m_BackpropInputMatrixWidth );
 	cudaDeviceSynchronize(); ///OK
 
 	//Copy back result into host memory d_Output -> m_OutputMatrix
 	cudaMemcpy(m_BackpropagationOutput, d_Output, outputByteCount, cudaMemcpyDeviceToHost); ///OK
 }
+
+
+void MaxPool::LayerForwardPass(float** _inputs)
+{
+	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_INPUTS; ++inputNumber)
+	{
+		int inputSize = L_FORWARD_InputLayer_HEIGHT * L_FORWARD_InputLayer_WIDTH;
+		int outputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+		size_t inputByteCount = inputSize * sizeof(float);
+		size_t outputByteCount = inputSize * sizeof(float);
+
+		L_FORWARD_Pass_INPUTS[inputNumber] = new float[inputSize];
+		L_FORWARD_Pass_OUTPUTS[inputNumber] = new float[outputSize];
+
+		memcpy(L_FORWARD_Pass_INPUTS[inputNumber], _inputs[inputNumber], inputSize);
+
+		//Define pointers for deviceMemory locations
+		float* d_Input;
+		float* d_Output;
+
+		//Allocate memory
+		cudaMalloc((void**)&d_Input, inputByteCount);
+		cudaMalloc((void**)&d_Output, inputByteCount);
+
+		//Copy memory into global device memory m_InputMatrix -> d_Input
+		cudaMemcpy(d_Input, L_FORWARD_Pass_INPUTS[inputNumber], inputByteCount, cudaMemcpyHostToDevice);
+
+		//Define block size and threads per block.
+		dim3 blockGrid(L_FORWARD_InputLayer_HEIGHT, 1, 1);
+		dim3 threadGrid(L_FORWARD_InputLayer_WIDTH, 1, 1);
+
+		MaxPoolKernel<< <blockGrid, threadGrid >> > (d_Input, d_Output, L_FORWARD_InputLayer_WIDTH, L_FORWARD_OutputLayer_WIDTH);
+		cudaDeviceSynchronize();
+
+		//Copy back result into host memory d_Output -> m_OutputMatrix
+		cudaMemcpy(L_FORWARD_Pass_OUTPUTS[inputNumber], d_Output, outputByteCount, cudaMemcpyDeviceToHost);
+	}
+}
+
+
+void MaxPool::LayerBackwardPass(float** _backpropInput)
+{
+	int forwardInputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+
+	int backwardInputSize = L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH;
+
+	int backwardOutputSize = L_BACKWARD_OutputLayer_HEIGHT * L_BACKWARD_OutputLayer_WIDTH;
+
+	size_t forwardInputByteCount = forwardInputSize * sizeof(float);
+
+	size_t backwardInputByteCount = backwardInputSize * sizeof(float);
+
+	size_t backwardOutputByteCount = backwardOutputSize * sizeof(float);
+
+	for (int inputNumber = 0; inputNumber < L_FORWARD_NumerOf_OUTPUTS; ++inputNumber)
+	{
+
+		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardOutputSize];
+		L_BACKWARD_Pass_OUTPUTS[inputNumber] = new float[backwardInputSize];
+
+		memcpy(L_BACKWARD_Pass_INPUTS[inputNumber], _backpropInput[inputNumber], backwardInputByteCount);
+
+		//Define pointers for deviceMemory locations
+		float* d_FwdInput; ///OK
+		float* d_BackpropInput; ///OK
+		float* d_BackwardOutput; ///OK
+
+		//Allocate memory
+		cudaMalloc((void**)&d_FwdInput, forwardInputByteCount); ///OK
+		cudaMalloc((void**)&d_BackpropInput, backwardInputByteCount);///OK
+		cudaMalloc((void**)&d_BackwardOutput, backwardOutputByteCount);///OK
+
+		//Copy memory into global device memory m_InputMatrix -> d_Input
+		cudaMemcpy(d_BackpropInput, L_BACKWARD_Pass_INPUTS[inputNumber], backwardInputByteCount, cudaMemcpyHostToDevice); ///OK
+		cudaMemcpy(d_FwdInput, L_FORWARD_Pass_INPUTS[inputNumber], forwardInputByteCount, cudaMemcpyHostToDevice); ///OK
+
+		//Define block size and threads per block.
+		dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
+		dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);///OK
+
+		BackpropMaxPoolKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_BackwardOutput, L_FORWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_WIDTH); ///OK
+		cudaDeviceSynchronize();///OK
+
+		//Copy back result into host memory d_Output -> m_OutputMatrix
+		cudaMemcpy(L_BACKWARD_Pass_OUTPUTS[inputNumber], d_BackwardOutput, backwardOutputByteCount, cudaMemcpyDeviceToHost);///OK
+
+		cudaFree(d_FwdInput);
+		cudaFree(d_BackpropInput);
+		cudaFree(d_BackwardOutput);
+	}
+}
+
+
 
 void MaxPool::UpdateModule()
 {
