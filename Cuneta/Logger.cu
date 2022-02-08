@@ -35,8 +35,8 @@ void CunetaLogger::LogReLUState(ReLU reluToSave, string outputDirectory, string 
 
 	output << endl;
 	output << "m_BackpropInputDims" << endl;
-	output << reluToSave.m_BackpropInputMatrixHeight<< endl;
-	output << reluToSave.m_BackpropInputMatrixWidth<< endl;
+	output << reluToSave.m_BackpropInputMatrixHeight << endl;
+	output << reluToSave.m_BackpropInputMatrixWidth << endl;
 
 	output << endl;
 	output << "m_BackpropOutputDims" << endl;
@@ -67,7 +67,7 @@ void CunetaLogger::LogReLUState(ReLU reluToSave, string outputDirectory, string 
 	{
 		output << reluToSave.m_BackPropInputMatrix[i] << " ";
 	}
-	
+
 	output << endl;
 	output << endl;
 	output << "m_BackpropagationOutput" << endl;
@@ -184,8 +184,8 @@ void CunetaLogger::LogConvolutionState(Convolution convolutionToSave, string out
 
 	output << endl;
 	output << "m_PaddingDim" << endl;
-	output << convolutionToSave.m_PaddingSize<< endl;
-	
+	output << convolutionToSave.m_PaddingSize << endl;
+
 	output << endl;
 	output << "m_OutputDims" << endl;
 	output << convolutionToSave.m_OutputMatrixHeight << endl;
@@ -199,7 +199,7 @@ void CunetaLogger::LogConvolutionState(Convolution convolutionToSave, string out
 	output << endl;
 	output << "m_PaddedInputDims" << endl;
 	output << convolutionToSave.m_PaddedInputHeight << endl;
-	output << convolutionToSave.m_PaddedInputWidth<< endl;
+	output << convolutionToSave.m_PaddedInputWidth << endl;
 
 	output << endl;
 	output << "m_BackpropOutputDims" << endl;
@@ -363,7 +363,7 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 	{
 		output << transposeConvolutionToSave.m_OutputMatrix[i] << " ";
 	}
-	
+
 	output << endl;
 	output << endl;
 	output << "m_BackPropInputMatrix" << endl;
@@ -388,11 +388,85 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 
 void CunetaLogger::LogErrorState(ErrorCalcModule errorModuleToSave, string outputDirectory, string imageName, int iteration)
 {
-	
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "ErrorModule";
+	logFilePath += imageName;
+	logFilePath += "_";
+	logFilePath += to_string(iteration);
+	logFilePath += ".cunetalog";
+
+	ofstream output(logFilePath);
+
+	output << "TRANSPOSE_CONVOLUTION" << endl;
+	output << imageName << endl;
+	output << iteration << endl;
+
+	output << endl;
+	output << "m_InputDims" << endl;
+	output << errorModuleToSave.m_InputMatrixHeight << endl;
+	output << errorModuleToSave.m_InputMatrixWidth << endl;
+
+	output << endl;
+	output << "m_OutputDims" << endl;
+	output << errorModuleToSave.m_OutputMatrixHeight << endl;
+	output << errorModuleToSave.m_OutputMatrixWidth << endl;
+
+	output << endl;
+	output << endl;
+	output << "Network error" << endl;
+	output << errorModuleToSave.networkError << endl;
+
+	output << endl;
+	output << "m_InputMatrix" << endl;
+	for (int i = 0; i < errorModuleToSave.m_InputMatrixHeight * errorModuleToSave.m_InputMatrixWidth; ++i)
+	{
+		output << errorModuleToSave.m_InputMatrix[i] << " ";
+	}
+
+	output << endl;
+	output << endl;
+	output << "Sigmoid Output" << endl;
+
+	for (int i = 0; i < errorModuleToSave.m_InputMatrixHeight * errorModuleToSave.m_InputMatrixHeight; ++i)
+	{
+		output << errorModuleToSave.sigmoidResultMatrix[i] << " ";
+	}
+
+	output << endl;
+	output << endl;
+	output << "Cross Entropy Output" << endl;
+
+	for (int i = 0; i < errorModuleToSave.m_InputMatrixHeight * errorModuleToSave.m_InputMatrixHeight; ++i)
+	{
+		output << errorModuleToSave.crossEntropyResultMatrix[i] << " ";
+	}
+
+	output << endl;
+	output << endl;
+	output << "dLdx Output" << endl;
+
+	for (int i = 0; i < errorModuleToSave.m_InputMatrixHeight * errorModuleToSave.m_InputMatrixHeight; ++i)
+	{
+		output << errorModuleToSave.dLdXMatrix[i] << " ";
+	}
+
+	output << endl;
+	output << endl;
+	output << "Intermeidate sums Output" << endl;
+
+	for (int i = 0; i < errorModuleToSave.m_InputMatrixHeight; ++i)
+	{
+		output << errorModuleToSave.intermediateSumResult[i] << " ";
+	}
+
+	output << endl;
+	output.close();
 }
 
 
-void CunetaLogger::AddImageNameToProcessingHistory(string outputDirectory,string imagePath)
+void CunetaLogger::AddImageNameToProcessingHistory(string outputDirectory, string imagePath, int iteration)
 {
 	string logFilePath;
 	logFilePath += outputDirectory;
@@ -404,25 +478,77 @@ void CunetaLogger::AddImageNameToProcessingHistory(string outputDirectory,string
 
 	bool logFileExists;
 	ifstream file(logFilePath);
-	if (file)            
-		logFileExists = true;    
-	else                 
+	if (file)
+		logFileExists = true;
+	else
 		logFileExists = false;
 	file.close();
 
-	if(logFileExists)
+	if (logFileExists)
 	{
 		outfile.open(logFilePath, std::ios_base::app); // append instead of overwrite
 	}
-	else{
+	else {
 		outfile.open(logFilePath);
 	}
 
-	outfile << imagePath << endl;
+	outfile << iteration << imagePath << endl;
 	outfile.close();
-
-
-
 }
+
+void CunetaLogger::AddErrorScore(string outputDirectory, float scoreToAdd, int iteration)
+{
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "Error History";
+	logFilePath += ".cunetalog";
+
+	std::ofstream outfile;
+
+	bool logFileExists;
+	ifstream file(logFilePath);
+	if (file)
+		logFileExists = true;
+	else
+		logFileExists = false;
+	file.close();
+
+	if (logFileExists)
+	{
+		outfile.open(logFilePath, std::ios_base::app); // append instead of overwrite
+	}
+	else {
+		outfile.open(logFilePath);
+	}
+
+	outfile << iteration << scoreToAdd << endl;
+	outfile.close();
+}
+
+void CunetaLogger::SaveFilter(float* filter, int filterSize, string outputDirectory, string layer, int iteration)
+{
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "FilterSave_";
+	logFilePath += layer;
+	logFilePath += "_";
+	logFilePath += to_string(iteration);
+	logFilePath += ".cunetalog";
+
+	ofstream output(logFilePath);
+
+	output << filterSize << " " << filterSize << " ";
+
+	for (int i = 0; i < filterSize * filterSize; ++i)
+	{
+		output << filter[i] << " ";
+	}
+
+	output << endl;
+	output.close();
+}
+
 
 
