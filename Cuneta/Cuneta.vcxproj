@@ -87,6 +87,7 @@
     <CudaCompile Include="ErrorCalcModule.cu" />
     <CudaCompile Include="FolderManager.cu" />
     <CudaCompile Include="ImageIngester.cu" />
+    <CudaCompile Include="Layer.cu" />
     <CudaCompile Include="Logger.cu" />
     <CudaCompile Include="main.cu" />
     <CudaCompile Include="MaxPool.cu" />
@@ -103,6 +104,7 @@
     <ClInclude Include="ErrorCalcModule.cuh" />
     <ClInclude Include="FolderManager.cuh" />
     <ClInclude Include="ImageIngester.cuh" />
+    <ClInclude Include="Layer.cuh" />
     <ClInclude Include="Logger.cuh" />
     <ClInclude Include="MaxPool.cuh" />
     <ClInclude Include="ReLU.cuh" />
