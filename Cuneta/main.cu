@@ -25,53 +25,103 @@ int main()
 	Convolution conv = Convolution(3, 2, 2, 4, 6, 4);
 	conv.LayerFilterInitialization();
 
-
-	float** inputs = new float* [2];
-
-	inputs[0] = new float[4 * 6];
-
-	for (int i = 0; i < 4 * 6; ++i)
-	{
-		inputs[0][i] = 1;
-	}
-
-	inputs[1] = new float[4 * 6];
-
-	for (int i = 0; i < 4 * 6; ++i)
-	{
-		inputs[1][i] = 2;
-	}
-
-
-	conv.LayerForwardPass(inputs);
-
 	int counter = 1;
 
+	//float** inputs = new float* [2];
 
-	cout << "First input" << endl;
-	for (int i = 0; i < 24; ++i)
-	{
-		cout << conv.L_FORWARD_Pass_INPUTS[0][i] << " ";
-		counter++;
-		if (counter == 4 + 1)
-		{
-			cout << endl;
-			counter = 1;
-		}
-	}
-	cout << endl;
-	cout << "Second input" << endl;
+	//inputs[0] = new float[4 * 6];
 
-	for (int i = 0; i < 24; ++i)
-	{
-		cout << conv.L_FORWARD_Pass_INPUTS[1][i] << " ";
-		counter++;
-		if (counter == 4 + 1)
-		{
-			cout << endl;
-			counter = 1;
-		}
-	}
+	//for (int i = 0; i < 4 * 6; ++i)
+	//{
+	//	inputs[0][i] = 1;
+	//}
+
+	//inputs[1] = new float[4 * 6];
+
+	//for (int i = 0; i < 4 * 6; ++i)
+	//{
+	//	inputs[1][i] = 2;
+	//}
+
+
+	//conv.LayerForwardPass(inputs);
+
+	
+
+	//cout << "First input" << endl;
+	//for (int i = 0; i < 24; ++i)
+	//{
+	//	cout << conv.L_FORWARD_Pass_INPUTS[0][i] << " ";
+	//	counter++;
+	//	if (counter == 4 + 1)
+	//	{
+	//		cout << endl;
+	//		counter = 1;
+	//	}
+	//}
+	//cout << endl;
+	//cout << "Second input" << endl;
+
+	//for (int i = 0; i < 24; ++i)
+	//{
+	//	cout << conv.L_FORWARD_Pass_INPUTS[1][i] << " ";
+	//	counter++;
+	//	if (counter == 4 + 1)
+	//	{
+	//		cout << endl;
+	//		counter = 1;
+	//	}
+	//}
+
+	//cout << endl;
+	//cout << endl;
+	//cout << "=================================" << endl;
+	//cout << "=================================" << endl;
+	//cout << "============ Filters ============" << endl;
+	//cout << "=================================" << endl;
+	//cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
+	//for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	//{
+	//	cout << "Filter " << j << endl;
+
+	//	for (int i = 0; i < 9; ++i)
+	//	{
+	//		cout << conv.L_Filters[j][i] << " ";
+	//		counter++;
+	//		if (counter == 3 + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//}
+
+	//cout << endl;
+	//cout << endl;
+	//cout << "=================================" << endl;
+	//cout << "=================================" << endl;
+	//cout << "============ Outputs ============" << endl;
+	//cout << "=================================" << endl;
+
+	//for (int j = 0; j < 4; ++j)
+	//{
+	//	cout << "Output " << j << endl;
+
+	//	for (int i = 0; i < 6; ++i)
+	//	{
+	//		cout << conv.L_FORWARD_Pass_OUTPUTS[j][i] << " ";
+	//		counter++;
+	//		if (counter == 2 + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+
+	//}
+
 
 	cout << endl;
 	cout << endl;
@@ -97,29 +147,32 @@ int main()
 		cout << endl;
 	}
 
-	cout << endl;
-	cout << endl;
-	cout << "=================================" << endl;
-	cout << "=================================" << endl;
-	cout << "============ Outputs ============" << endl;
-	cout << "=================================" << endl;
+	conv.LayerFlipFilter();
 
-	for (int j = 0; j < 4; ++j)
+	cout << "============ AFTER FLIP ============" << endl;
+
+	cout << endl;
+	cout << endl;
+	cout << "=================================" << endl;
+	cout << "=================================" << endl;
+	cout << "============ Filters ============" << endl;
+	cout << "=================================" << endl;
+	cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
 	{
-		cout << "Output " << j << endl;
+		cout << "Filter " << j << endl;
 
-		for (int i = 0; i < 6; ++i)
+		for (int i = 0; i < 9; ++i)
 		{
-			cout << conv.L_FORWARD_Pass_OUTPUTS[j][i] << " ";
+			cout << conv.L_Filters[j][i] << " ";
 			counter++;
-			if (counter == 2 + 1)
+			if (counter == 3 + 1)
 			{
 				cout << endl;
 				counter = 1;
 			}
 		}
 		cout << endl;
-
 	}
 
 	//CunetaFolderManager folderManager = CunetaFolderManager(directory);
