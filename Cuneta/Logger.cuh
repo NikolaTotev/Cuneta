@@ -21,6 +21,7 @@ public:
 	void LogConvolutionState(Convolution convolutionToSave, string outputDirectory, string imageName, int iteration);
 	void LogTransposeConvolutionState(TransposeConvolution transposeConvolutionToSave, string outputDirectory, string imageName, int iteration);
 	void LogErrorState(ErrorCalcModule errorModuleToSave, string outputDirectory, string imageName, int iteration);
-	void AddErrorScore(float scoreToAdd);
-	void AddImageNameToProcessingHistory(string outputDirectory, string imagePath);
+	void AddErrorScore(string outputDirectory, float scoreToAdd, int iteration);
+	void AddImageNameToProcessingHistory(string outputDirectory, string imagePath, int iteration);
+	void SaveFilter(float* filter, int filterSize, string outputDirectory, string layer, int iteration);
 };
