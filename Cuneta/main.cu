@@ -21,7 +21,106 @@ int main()
 	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\processed_data";
 	string imageName = "Ingester_Ground_Truth_Test";
 
-	ReLU test = ReLU();
+
+	Convolution conv = Convolution(3, 2, 2, 4, 6, 4);
+	conv.LayerFilterInitialization();
+
+
+	float** inputs = new float* [2];
+
+	inputs[0] = new float[4 * 6];
+
+	for (int i = 0; i < 4 * 6; ++i)
+	{
+		inputs[0][i] = 1;
+	}
+
+	inputs[1] = new float[4 * 6];
+
+	for (int i = 0; i < 4 * 6; ++i)
+	{
+		inputs[1][i] = 2;
+	}
+
+
+	conv.LayerForwardPass(inputs);
+
+	int counter = 1;
+
+
+	cout << "First input" << endl;
+	for (int i = 0; i < 24; ++i)
+	{
+		cout << conv.L_FORWARD_Pass_INPUTS[0][i] << " ";
+		counter++;
+		if (counter == 4 + 1)
+		{
+			cout << endl;
+			counter = 1;
+		}
+	}
+	cout << endl;
+	cout << "Second input" << endl;
+
+	for (int i = 0; i < 24; ++i)
+	{
+		cout << conv.L_FORWARD_Pass_INPUTS[1][i] << " ";
+		counter++;
+		if (counter == 4 + 1)
+		{
+			cout << endl;
+			counter = 1;
+		}
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "=================================" << endl;
+	cout << "=================================" << endl;
+	cout << "============ Filters ============" << endl;
+	cout << "=================================" << endl;
+	cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+		cout << "Filter " << j << endl;
+
+		for (int i = 0; i < 9; ++i)
+		{
+			cout << conv.L_Filters[j][i] << " ";
+			counter++;
+			if (counter == 3 + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "=================================" << endl;
+	cout << "=================================" << endl;
+	cout << "============ Outputs ============" << endl;
+	cout << "=================================" << endl;
+
+	for (int j = 0; j < 4; ++j)
+	{
+		cout << "Output " << j << endl;
+
+		for (int i = 0; i < 6; ++i)
+		{
+			cout << conv.L_FORWARD_Pass_OUTPUTS[j][i] << " ";
+			counter++;
+			if (counter == 2 + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+
+	}
 
 	//CunetaFolderManager folderManager = CunetaFolderManager(directory);
 	//folderManager.GetAllFoldersInDirectory();
@@ -65,7 +164,7 @@ int main()
 
 	//test.ForwardPass(fwdInput, matrixHeight, matrixWidth);
 	//test.BackwardPass(backInput, matrixHeight, matrixWidth);
-	
+
 	//CunetaLogger loggy = CunetaLogger();
 	//loggy.LogReLUState(test, directory, imageName, 1);
 	//TestReLU(matrixWidth, matrixHeight, -1, 5, true); ///OK
@@ -81,7 +180,7 @@ int main()
 	//TestTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
 	//TestBackpropTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
 
-	TestBackpropErrorCalcModule(matrixHeight, matrixWidth, -1, 3, 0,1 , true);
+	//TestBackpropErrorCalcModule(matrixHeight, matrixWidth, -1, 3, 0, 1, true);
 
 	//TestImageIngester(inputPath, groundTruthPath, true);
 
