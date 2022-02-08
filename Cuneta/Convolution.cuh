@@ -43,6 +43,7 @@ public:
 	void InitializeFilter();
 	void LayerFilterInitialization();
 	void FlipFilter();
+	void LayerFlipFilter();
 	void PadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
 };
