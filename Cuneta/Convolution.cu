@@ -85,6 +85,15 @@ Convolution::Convolution(int _filterSize, int _paddingSize)
 {
 	m_FilterSize = _filterSize;
 	m_PaddingSize = _paddingSize;
+	m_AdamOptimizer_VMatrix = new float[m_FilterSize * m_FilterSize];
+	m_AdamOptimizer_SMatrix = new float[m_FilterSize * m_FilterSize];
+
+	m_AdamOptimizer_Corrected_VMatrix = new float[m_FilterSize * m_FilterSize];
+	m_AdamOptimizer_Corrected_SMatrix = new float[m_FilterSize * m_FilterSize];
+
+	memset(m_AdamOptimizer_VMatrix, 0, m_FilterSize * m_FilterSize * sizeof(float));
+	memset(m_AdamOptimizer_SMatrix, 0, m_FilterSize * m_FilterSize * sizeof(float));
+
 	InitializeFilter();
 }
 
@@ -139,7 +148,7 @@ void Convolution::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fw
 	cudaMemcpy(d_Input, m_InputMatrix, inputByteCount, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_Filter, m_Filter, filterByteCount, cudaMemcpyHostToDevice);
 
-	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_OutputMatrixWidth, m_InputMatrixWidth,  m_FilterSize, m_FilterSize);
+	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_OutputMatrixWidth, m_InputMatrixWidth, m_FilterSize, m_FilterSize);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(m_OutputMatrix, d_Output, outputByteCount, cudaMemcpyDeviceToHost);
@@ -170,7 +179,7 @@ void Convolution::BackwardPass(float* backpropInput, int backPassHeight, int bac
 
 	int rowShifts = m_BackpropOutputMatrixHeight;
 	int columnShifts = m_BackpropOutputMatrixWidth;
-	
+
 
 	dim3 blockGrid(rowShifts, 1, 1); ///OK
 	dim3 threads(columnShifts, 1, 1); ///OK
@@ -182,7 +191,7 @@ void Convolution::BackwardPass(float* backpropInput, int backPassHeight, int bac
 	int inputByteCount = inputElementCount * sizeof(float); ///OK
 	int filterByteCount = filterMatrixElementCount * sizeof(float); ///OK
 	int outputByteCount = outputElementCount * sizeof(float); ///OK
-	
+
 	//Define pointers for deviceMemory locations
 	float* d_Input; ///OK
 	float* d_Filter; ///OK
@@ -199,7 +208,7 @@ void Convolution::BackwardPass(float* backpropInput, int backPassHeight, int bac
 	cudaMemcpy(d_Input, m_PaddedBackpropInput, inputByteCount, cudaMemcpyHostToDevice); ///OK
 	cudaMemcpy(d_Filter, m_FlippedFilter, filterByteCount, cudaMemcpyHostToDevice); ///OK
 
-	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_BackpropOutputMatrixWidth, m_PaddedInputWidth,  m_FilterSize, m_FilterSize);
+	ConvolutionKernel << <blockGrid, threads >> > (d_Input, d_Filter, d_Output, m_BackpropOutputMatrixWidth, m_PaddedInputWidth, m_FilterSize, m_FilterSize);
 	cudaDeviceSynchronize(); ///OK
 
 
@@ -245,7 +254,7 @@ void Convolution::FilterBackprop(float* backpropInput, int backPassHeight, int b
 	dim3 blockGrid(rowShifts, 1, 1); ///OK
 	dim3 threads(columnShifts, 1, 1); ///OK
 
-	ConvolutionKernel << <blockGrid, threads >> > (d_FwdInput, d_FilterEquiv, d_FilterOutput, m_FilterSize, m_InputMatrixWidth,  m_OutputMatrixHeight, m_OutputMatrixWidth);
+	ConvolutionKernel << <blockGrid, threads >> > (d_FwdInput, d_FilterEquiv, d_FilterOutput, m_FilterSize, m_InputMatrixWidth, m_OutputMatrixHeight, m_OutputMatrixWidth);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(m_FilterBackpropResult, d_FilterOutput, filterOutputByteCount, cudaMemcpyDeviceToHost);
@@ -294,9 +303,11 @@ void Convolution::UpdateModule()
 			int index = rowIndex * m_FilterSize + columnIndex;
 
 			float filterBackpropValue = m_FilterBackpropResult[index];
+			float oldV = m_AdamOptimizer_VMatrix[index];
+			float oldS = m_AdamOptimizer_SMatrix[index];
 
-			float newV = m_HyperParam_Beta1 * filterBackpropValue + (1 - m_HyperParam_Beta1) * filterBackpropValue;
-			float newS = m_HyperParam_Beta2 * filterBackpropValue + (1 - m_HyperParam_Beta2) * filterBackpropValue;
+			float newV = m_HyperParam_Beta1 * oldV + (1 - m_HyperParam_Beta1) * filterBackpropValue;
+			float newS = m_HyperParam_Beta2 * oldS + (1 - m_HyperParam_Beta2) * filterBackpropValue;
 
 			float newVCorrected = newV / (1 - pow(m_HyperParam_Beta1, m_HyperParam_T));
 			float newSCorrected = newS / (1 - pow(m_HyperParam_Beta2, m_HyperParam_T));
@@ -348,5 +359,13 @@ void Convolution::FlipFilter()
 }
 
 
+void Convolution::SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha)
+{
+	m_HyperParam_Beta1 = _beta1;
+	m_HyperParam_Beta2 = _beta2;
+	m_HyperParam_Epsilon = _eps;
+	m_HyperParam_T = _t;
+	m_HyperParam_alpha = _alpha;
+}
 
 
