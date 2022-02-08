@@ -259,9 +259,11 @@ void TransposeConvolution::UpdateModule()
 			int index = rowIndex * m_FilterSize + columnIndex;
 
 			float filterBackpropValue = m_FilterBackpropResult[index];
+			float oldV = m_AdamOptimizer_VMatrix[index];
+			float oldS = m_AdamOptimizer_SMatrix[index];
 
-			float newV = m_HyperParam_Beta1 * filterBackpropValue + (1 - m_HyperParam_Beta1) * filterBackpropValue;
-			float newS = m_HyperParam_Beta2 * filterBackpropValue + (1 - m_HyperParam_Beta2) * filterBackpropValue;
+			float newV = m_HyperParam_Beta1 * oldV + (1 - m_HyperParam_Beta1) * filterBackpropValue;
+			float newS = m_HyperParam_Beta2 * oldS + (1 - m_HyperParam_Beta2) * filterBackpropValue;
 
 			float newVCorrected = newV / (1 - pow(m_HyperParam_Beta1, m_HyperParam_T));
 			float newSCorrected = newS / (1 - pow(m_HyperParam_Beta2, m_HyperParam_T));
