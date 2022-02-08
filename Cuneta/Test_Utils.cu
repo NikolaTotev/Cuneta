@@ -721,6 +721,161 @@ void TestBackpropConvolution(int inputMatrixWidth, int inputMatrixHeight, int fw
 		}
 		cout << endl;
 	}
+
+
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+
+	cout << "Old filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_Filter[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	testSubject.SetHyperParams(0.9, 0.9999, pow(10, -8), 1, 0.5);
+	testSubject.UpdateModule();
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+
+	cout << "Updated filter filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_Filter[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "VMatrix filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_AdamOptimizer_VMatrix[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "Corrected VMatrix filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_AdamOptimizer_Corrected_VMatrix[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "SMatrix filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_AdamOptimizer_SMatrix[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+	cout << "Corrected SMatrix filter:" << endl;
+	cout << endl;
+
+	rowCounter = 1;
+
+	if (printMatricies)
+	{
+		for (int i = 0; i < testSubject.m_FilterSize * testSubject.m_FilterSize; ++i)
+		{
+			cout << testSubject.m_AdamOptimizer_Corrected_SMatrix[i] << " ";
+			rowCounter++;
+			if (rowCounter == testSubject.m_FilterSize + 1)
+			{
+				cout << endl;
+				rowCounter = 1;
+			}
+		}
+	}
+
+	cout << endl << "=====================================";
+	cout << endl;
+	cout << endl;
+
+
 	cout << endl << "=====================================";
 	cout << endl;
 	cout << endl;
@@ -1288,7 +1443,9 @@ void TestBackpropErrorCalcModule(int inputMatrixWidth, int inputMatrixHeight, in
 	cout << endl << "=====================================";
 	cout << endl;
 	cout << endl;
-	
+
+	loggy.LogErrorState(testSubject, directory, imageName, 1);
+
 	delete[] fwdInput;
 	delete[] backInput;
 }
