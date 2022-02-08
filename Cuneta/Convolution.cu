@@ -73,7 +73,7 @@ __global__ void ConvolutionKernel(float* d_Input, float* d_Filter, float* d_Outp
 __global__ void LayerConvolutionKernal(float** _inputs, float** _filters, float** _outputs, float* biases, int _numberOfInputs, int _outputWidth, int _inputWidth, int _filterSize)
 {
 	int inputSelectionIndex = threadIdx.x;
-	int filterSelectionIndex = blockIdx.z* _numberOfInputs + threadIdx.x;
+	int filterSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
 	int outputSelectionIndex = blockIdx.z;
 
 	float* selectedInput = _inputs[inputSelectionIndex];
@@ -107,11 +107,28 @@ __global__ void LayerConvolutionKernal(float** _inputs, float** _filters, float*
 		}
 		inputStartReadRowIndex += 1;
 	}
-	
+
 	//selectedOutput[outputArrayIndex] = filterSelectionIndex;
 	atomicAdd(&selectedOutput[outputArrayIndex], result);
 };
 
+__global__ void  LayerConvolutionPaddingKernel()
+{
+
+}
+
+__global__ void LayerFilterFlipKernel(float** _inputFilters, float** _outputFilters, int _filterSize)
+{
+	float* filterToFlip = _inputFilters[blockIdx.x];
+	int filterArraySize = _filterSize * _filterSize;
+	float* flippedOutput = _outputFilters[blockIdx.x];
+	int k = 0;
+
+	//Loop from back and assign value to new array
+	for (int i = filterArraySize - 1; i >= 0; ) {
+		flippedOutput[k++] = filterToFlip[i--];
+	}
+}
 
 __global__ void ConvolutionPaddingKernel(float* d_UnpaddedInput, float* d_Output, int _paddedInputWidth, int _unpaddedInputWidth, int _unpaddedInputHeight)
 {
@@ -451,7 +468,6 @@ void Convolution::LayerBackwardPass(float** _backpropInput)
 }
 
 
-
 void Convolution::PadBackpropInput()
 {
 	m_PaddedInputHeight = m_BackpropInputMatrixHeight + 2 * m_PaddingSize;
@@ -550,7 +566,7 @@ void Convolution::LayerFilterInitialization()
 
 		for (int i = 0; i < filterElementCount; ++i)
 		{
-			L_Filters[filterNumber][i] = filterNumber; //distribution(gen);
+			L_Filters[filterNumber][i] = i+1; //distribution(gen);
 		}
 	}
 }
@@ -568,6 +584,75 @@ void Convolution::FlipFilter()
 		m_FlippedFilter[k++] = m_Filter[i--];
 	}
 }
+
+void Convolution::LayerFlipFilter()
+{
+	int inputSize = m_FilterSize * m_FilterSize;
+
+	int outputSize = m_FilterSize * m_FilterSize;
+
+	size_t inputByteCount = inputSize * sizeof(float);
+	size_t outputByteCount = outputSize * sizeof(float);
+
+
+	int numberOfBlockx_X = L_NumberOf_FILTERS;
+
+	// create intermediate host array for storage of device row-pointers
+
+	// create top-level device array pointer
+	float** h_Inputs = new float* [L_NumberOf_FILTERS];
+
+	float** h_Outputs = new float* [L_NumberOf_FILTERS];
+
+	float** d_InputPointerArray;
+	cudaMalloc((void**)&d_InputPointerArray, L_NumberOf_FILTERS * sizeof(int*));
+
+
+	float** d_OutputPointerArray;
+	cudaMalloc((void**)&d_OutputPointerArray, L_NumberOf_FILTERS * sizeof(int*));
+
+
+	// allocate each device row-pointer, then copy host data to it
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaMalloc(&h_Inputs[i], inputByteCount);
+		cudaMemcpy(h_Inputs[i], L_Filters[i], inputByteCount, cudaMemcpyHostToDevice);
+	}
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaMalloc(&h_Outputs[i], outputByteCount);
+	}
+
+	// fixup top level device array pointer to point to array of device row-pointers
+	cudaMemcpy(d_InputPointerArray, h_Inputs, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+
+	dim3 blockGrid(numberOfBlockx_X, 1, 1); ///OK
+	dim3 threads(1, 1, 1); ///OK
+
+	LayerFilterFlipKernel << <blockGrid, threads >> > (d_InputPointerArray, d_OutputPointerArray, m_FilterSize);
+	cudaDeviceSynchronize();
+
+	float* temp = new float[outputSize];
+
+	cudaMemcpy(h_Outputs, d_OutputPointerArray, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+
+		cudaMemcpy(temp, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_Filters[i], temp, outputByteCount);
+		cudaFree(h_Outputs[i]);
+	}
+	cudaFree(d_OutputPointerArray);
+	delete[] h_Outputs;
+
+	// allocate each device row-pointer, then copy host data to it
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaFree(&d_InputPointerArray[i]);
+	}
+	cudaFree(d_InputPointerArray);
+	delete[] h_Inputs;
+}
+
 
 
 void Convolution::SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha)
