@@ -81,22 +81,6 @@ int main()
 	//TestTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 3, 2, true); ///OK
 	//TestBackpropTransposeConvolution(matrixWidth, matrixHeight, -1, 5, 1,3 , 3, 2, true); ///OK
 
-	/*std::cout << input[0] << std::endl;
-	std::cout << input[1] << std::endl;
-	std::cout << input[matrixWidth] << std::endl;
-	std::cout << input[matrixWidth + 1] << std::endl;
-	TestMaxPool(input, output, matrixWidth, matrixHeight, false);*/
-
-	/*std::cout << input[0] << std::endl;
-	std::cout << input[1] << std::endl;
-	std::cout << input[2] << std::endl;
-	std::cout << input[matrixWidth] << std::endl;
-	std::cout << input[matrixWidth + 1] << std::endl;
-	std::cout << input[matrixWidth + 2] << std::endl;*/
-
-	//TestConvolution(input, matrixHeight, matrixWidth, 3, true);
-
-	//TestTransposeConvolution(input, matrixHeight, matrixWidth, 3, true);
 	TestBackpropErrorCalcModule(matrixHeight, matrixWidth, -1, 3, 0,1 , true);
 
 	//TestImageIngester(inputPath, groundTruthPath, true);
