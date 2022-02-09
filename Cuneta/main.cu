@@ -22,21 +22,74 @@ int main()
 	string imageName = "Ingester_Ground_Truth_Test";
 
 
-	Convolution conv = Convolution(3, 2, 2, 4, 6, 4);
+	Convolution conv = Convolution(3, 2, 1, 4, 8, 4);
 	conv.LayerFilterInitialization();
 
 	int counter = 1;
 
-	//float** inputs = new float* [2];
+	float** inputs = new float* [4];
 
-	//inputs[0] = new float[4 * 6];
+	for (int j = 0; j < 4; ++j)
+	{
+		inputs[j] = new float[2 * 4];
+
+		for (int i = 0; i < 2 * 4; ++i)
+		{
+			inputs[j][i] = j+1;
+		}
+	}
+	conv.LayerBackwardPass(inputs);
+	conv.LayerPadBackpropInput();
+
+	for (int j = 0; j < 4; ++j)
+	{
+
+		for (int i = 0; i < 2 * 4; ++i)
+		{
+			cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
+			counter++;
+			if (counter == 2 + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ PADDED BACKPROP INPUTS ============" << endl;
+
+	for (int j = 0; j < 4; ++j)
+	{
+
+		for (int i = 0; i < conv.L_BACKWARD_InputLayer_PADDED_HEIGHT*conv.L_BACKWARD_InputLayer_PADDED_WIDTH; ++i)
+		{
+			cout << conv.L_BACKWARD_Pass_PADDED_INPUTS[j][i] << " ";
+			counter++;
+			if (counter == conv.L_BACKWARD_InputLayer_PADDED_WIDTH + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+		cout << endl;
+	}
+
+
+	//inputs[0] = new float[2 * 3];
 
 	//for (int i = 0; i < 4 * 6; ++i)
 	//{
 	//	inputs[0][i] = 1;
 	//}
 
-	//inputs[1] = new float[4 * 6];
+	//inputs[1] = new float[2 * 3];
 
 	//for (int i = 0; i < 4 * 6; ++i)
 	//{
@@ -46,7 +99,7 @@ int main()
 
 	//conv.LayerForwardPass(inputs);
 
-	
+
 
 	//cout << "First input" << endl;
 	//for (int i = 0; i < 24; ++i)
@@ -123,57 +176,57 @@ int main()
 	//}
 
 
-	cout << endl;
-	cout << endl;
-	cout << "=================================" << endl;
-	cout << "=================================" << endl;
-	cout << "============ Filters ============" << endl;
-	cout << "=================================" << endl;
-	cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
-	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
-	{
-		cout << "Filter " << j << endl;
+	//cout << endl;
+	//cout << endl;
+	//cout << "=================================" << endl;
+	//cout << "=================================" << endl;
+	//cout << "============ Filters ============" << endl;
+	//cout << "=================================" << endl;
+	//cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
+	//for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	//{
+	//	cout << "Filter " << j << endl;
 
-		for (int i = 0; i < 9; ++i)
-		{
-			cout << conv.L_Filters[j][i] << " ";
-			counter++;
-			if (counter == 3 + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
+	//	for (int i = 0; i < 9; ++i)
+	//	{
+	//		cout << conv.L_Filters[j][i] << " ";
+	//		counter++;
+	//		if (counter == 3 + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//}
 
-	conv.LayerFlipFilter();
+	//conv.LayerFlipFilter();
 
-	cout << "============ AFTER FLIP ============" << endl;
+	//cout << "============ AFTER FLIP ============" << endl;
 
-	cout << endl;
-	cout << endl;
-	cout << "=================================" << endl;
-	cout << "=================================" << endl;
-	cout << "============ Filters ============" << endl;
-	cout << "=================================" << endl;
-	cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
-	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
-	{
-		cout << "Filter " << j << endl;
+	//cout << endl;
+	//cout << endl;
+	//cout << "=================================" << endl;
+	//cout << "=================================" << endl;
+	//cout << "============ Filters ============" << endl;
+	//cout << "=================================" << endl;
+	//cout << "Number of filters: " << conv.L_NumberOf_FILTERS << endl;
+	//for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	//{
+	//	cout << "Filter " << j << endl;
 
-		for (int i = 0; i < 9; ++i)
-		{
-			cout << conv.L_Filters[j][i] << " ";
-			counter++;
-			if (counter == 3 + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
+	//	for (int i = 0; i < 9; ++i)
+	//	{
+	//		cout << conv.L_Filters[j][i] << " ";
+	//		counter++;
+	//		if (counter == 3 + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//}
 
 	//CunetaFolderManager folderManager = CunetaFolderManager(directory);
 	//folderManager.GetAllFoldersInDirectory();
