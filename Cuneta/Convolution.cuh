@@ -31,12 +31,11 @@ public:
 	int m_HyperParam_T;
 	float m_HyperParam_alpha;
 
-	float* testIt;
-
 	int L_BACKWARD_InputLayer_PADDED_HEIGHT;
 	int L_BACKWARD_InputLayer_PADDED_WIDTH;
 
 	float** L_BACKWARD_Pass_PADDED_INPUTS;
+	float** L_FLIPPED_Filters;
 
 
 
