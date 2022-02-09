@@ -33,6 +33,13 @@ public:
 
 	float* testIt;
 
+	int L_BACKWARD_InputLayer_PADDED_HEIGHT;
+	int L_BACKWARD_InputLayer_PADDED_WIDTH;
+
+	float** L_BACKWARD_Pass_PADDED_INPUTS;
+
+
+
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth);
@@ -45,6 +52,7 @@ public:
 	void FlipFilter();
 	void LayerFlipFilter();
 	void PadBackpropInput();
+	void LayerPadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
 };
 
