@@ -22,7 +22,7 @@ int main()
 	string imageName = "Ingester_Ground_Truth_Test";
 
 
-	Convolution conv = Convolution(3, 2, 1, 4, 8, 4);
+	Convolution conv = Convolution(3, 2, 2, 4, 8, 4);
 	conv.LayerFilterInitialization();
 
 	int counter = 1;
@@ -31,30 +31,32 @@ int main()
 
 	for (int j = 0; j < 4; ++j)
 	{
-		inputs[j] = new float[2 * 4];
+		inputs[j] = new float[2 * 6];
 
-		for (int i = 0; i < 2 * 4; ++i)
+		for (int i = 0; i < 2 * 6; ++i)
 		{
 			inputs[j][i] = j+1;
 		}
 	}
 	conv.LayerBackwardPass(inputs);
-	conv.LayerPadBackpropInput();
+	
+	cout << endl;
+	cout << endl;
+	cout << "============ BACKPROP INPUTS ============" << endl;
 
-	for (int j = 0; j < 4; ++j)
+	for (int j = 0; j < conv.L_BACKWARD_NumberOf_INPUTS; ++j)
 	{
 
-		for (int i = 0; i < 2 * 4; ++i)
+		for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT*conv.L_BACKWARD_InputLayer_WIDTH; ++i)
 		{
 			cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
 			counter++;
-			if (counter == 2 + 1)
+			if (counter == conv.L_BACKWARD_InputLayer_WIDTH + 1)
 			{
 				cout << endl;
 				counter = 1;
 			}
 		}
-
 		cout << endl;
 		cout << endl;
 	}
@@ -81,6 +83,49 @@ int main()
 		cout << endl;
 	}
 
+
+	cout << endl;
+	cout << endl;
+	cout << "============ BACKPROP FILTERS ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_FLIPPED_Filters[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ BACKPROP OUTPUTS ============" << endl;
+
+	for (int j = 0; j < conv.L_BACKWARD_NumberOf_OUTPUTS; ++j)
+	{
+
+		for (int i = 0; i < conv.L_BACKWARD_OutputLayer_HEIGHT * conv.L_BACKWARD_OutputLayer_WIDTH; ++i)
+		{
+			cout << conv.L_BACKWARD_Pass_OUTPUTS[j][i] << " ";
+			counter++;
+			if (counter == conv.L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+
+		cout << endl;
+		cout << endl;
+	}
 
 	//inputs[0] = new float[2 * 3];
 
