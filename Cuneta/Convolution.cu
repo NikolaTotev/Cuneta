@@ -506,6 +506,92 @@ void Convolution::LayerBackwardPass(float** _backpropInput)
 		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[inputSize];
 		memcpy(L_BACKWARD_Pass_INPUTS[inputNumber], _backpropInput[inputNumber], inputByteCount);
 	}
+
+	for (int outputNumber = 0; outputNumber < L_FORWARD_NumerOf_OUTPUTS; ++outputNumber)
+	{
+		L_BACKWARD_Pass_OUTPUTS[outputNumber] = new float[outputSize];
+	}
+
+	int numberOfBlockx_X = L_BACKWARD_OutputLayer_HEIGHT;//L_FORWARD_OutputLayer_HEIGHT;
+	int numberOfBlocks_Y = L_BACKWARD_OutputLayer_WIDTH;//L_FORWARD_OutputLayer_WIDTH;
+	int numberOfBlocks_Z = L_BACKWARD_NumberOf_OUTPUTS;//L_FORWARD_NumerOf_OUTPUTS;
+	int numberOfThreadsPerBlock = L_BACKWARD_NumberOf_INPUTS;//L_FORWARD_NumberOf_INPUTS;
+	
+	/// STATUS: (WORK POINTER)
+	/// WORK PAUSE BEFORE SLEEP WAS UP TO HERE << QUESTION TO BE SOLVED:
+	/// HOW MANY THREADS DO I NEED WHEN GOING FROM 4 outputs -> 2 inputs during backprop.
+	///	WORK STOP REASON - SLOW MENTAL PROCESSING. NEED SLEEP
+
+	// create intermediate host array for storage of device row-pointers
+
+	// create top-level device array pointer
+	float** h_Inputs = new float* [L_BACKWARD_NumberOf_INPUTS];  //(float**)malloc(L_FORWARD_NumberOf_INPUTS * sizeof(int*));
+	float** h_Filters = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_Outputs = new float* [L_BACKWARD_NumberOf_OUTPUTS]; //(float**)malloc(L_FORWARD_NumerOf_OUTPUTS * sizeof(int*));
+
+	float* d_Biases;
+	cudaMalloc((void**)&d_Biases, L_NumberOf_FILTERS * sizeof(float));
+
+
+	float** d_InputPointerArray;
+	cudaMalloc((void**)&d_InputPointerArray, L_BACKWARD_NumberOf_INPUTS * sizeof(int*));
+
+	float** d_FilterPointerArray;
+	cudaMalloc((void**)&d_FilterPointerArray, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_OutputPointerArray;
+	cudaMalloc((void**)&d_OutputPointerArray, L_BACKWARD_NumberOf_OUTPUTS * sizeof(int*));
+
+
+	// allocate each device row-pointer, then copy host data to it
+	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
+		cudaMalloc(&h_Inputs[i], inputByteCount);
+		cudaMemcpy(h_Inputs[i], L_FORWARD_Pass_INPUTS[i], inputByteCount, cudaMemcpyHostToDevice);
+	}
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaMalloc(&h_Filters[i], filterByteCount);
+		cudaMemcpy(h_Filters[i], L_Filters[i], filterByteCount, cudaMemcpyHostToDevice);
+	}
+
+	for (size_t i = 0; i < L_FORWARD_NumerOf_OUTPUTS; i++) {
+		cudaMalloc(&h_Outputs[i], outputByteCount);
+		cudaMemset(&h_Outputs[i], 0, outputByteCount);
+	}
+
+	// fixup top level device array pointer to point to array of device row-pointers
+	cudaMemcpy(d_InputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_FilterPointerArray, h_Filters, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_FORWARD_NumerOf_OUTPUTS * sizeof(float*), cudaMemcpyHostToDevice);
+
+	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
+	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
+
+	LayerConvolutionKernal << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, d_Biases, L_FORWARD_NumberOf_INPUTS, L_FORWARD_OutputLayer_WIDTH, L_FORWARD_InputLayer_WIDTH, m_FilterSize);
+	cudaDeviceSynchronize();
+	testIt = new float[outputSize];
+	cudaMemcpy(h_Outputs, d_OutputPointerArray, L_FORWARD_NumerOf_OUTPUTS * sizeof(int*), cudaMemcpyDeviceToHost);
+	for (size_t i = 0; i < L_FORWARD_NumerOf_OUTPUTS; i++) {
+
+		cudaMemcpy(testIt, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_FORWARD_Pass_OUTPUTS[i], testIt, outputByteCount);
+		//cudaFree(h_Outputs[i]);
+	}
+	//cudaFree(d_OutputPointerArray);
+	//delete[] h_Outputs;
+
+	// allocate each device row-pointer, then copy host data to it
+	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
+		cudaFree(&d_InputPointerArray[i]);
+	}
+	cudaFree(d_InputPointerArray);
+	delete[] h_Inputs;
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaFree(&d_FilterPointerArray[i]);
+	}
+	cudaFree(d_FilterPointerArray);
+	delete[] h_Filters;
 }
 
 
