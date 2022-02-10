@@ -11,7 +11,7 @@
 class TransposeConvolution : public CunetaModule
 {
 public:
-	TransposeConvolution(int _filterSize, int _paddingSize);
+	TransposeConvolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth);
 
 	float* m_Filter;
 	float* m_PaddedInput;
@@ -34,6 +34,13 @@ public:
 	int m_HyperParam_T;
 	float m_HyperParam_alpha;
 
+	int L_FORWARD_InputLayer_PADDED_HEIGHT;
+	int L_FORWARD_InputLayer_PADDED_WIDTH;
+
+	float** L_FORWARD_Pass_PADDED_INPUTS;
+	float** L_FLIPPED_Filters;
+	float** L_Filter_BACKPROP_RESULTS;
+
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth);
@@ -43,7 +50,13 @@ public:
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
 	void FlipFilter();
 
-	
+	void LayerForwardPass(float** _inputs) override;
+	void LayerBackwardPass(float** _backpropInput) override;
+	void LayerFilterBackprop();
+	void LayerBiasBackprop();
+	void LayerFilterInitialization();
+	void LayerFlipFilter();
+	void LayerPadInput();
 
 };
 
