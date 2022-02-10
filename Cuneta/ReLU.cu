@@ -58,9 +58,9 @@ __global__ void BackpropReLUKernel(float* d_BackpropInput, float* d_FwdInput, fl
 ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
-	L_FORWARD_NumerOf_OUTPUTS = _numberOfOutputs;
+	L_FORWARD_NumberOf_OUTPUTS = _numberOfOutputs;
 
-	L_BACKWARD_NumberOf_INPUTS = L_FORWARD_NumerOf_OUTPUTS;
+	L_BACKWARD_NumberOf_INPUTS = L_FORWARD_NumberOf_OUTPUTS;
 	L_BACKWARD_NumberOf_OUTPUTS = L_FORWARD_NumberOf_INPUTS;
 
 	L_FORWARD_InputLayer_HEIGHT = _IOHeight;
@@ -76,9 +76,9 @@ ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidt
 	L_BACKWARD_OutputLayer_WIDTH = L_FORWARD_InputLayer_WIDTH;
 
 	L_FORWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
-	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 
-	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
 }
 
@@ -212,7 +212,7 @@ void ReLU::LayerForwardPass(float** _inputs)
 
 void ReLU::LayerBackwardPass(float** _backpropInput)
 {
-	for (int inputNumber = 0; inputNumber < L_FORWARD_NumerOf_OUTPUTS; ++inputNumber)
+	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_OUTPUTS; ++inputNumber)
 	{
 		int forwardInputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
