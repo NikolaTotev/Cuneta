@@ -38,6 +38,10 @@ public:
 	float** L_FLIPPED_Filters;
 	float** L_Filter_BACKPROP_RESULTS;	 
 
+	float** L_AdamOptimizer_V_Matrix;
+	float** L_AdamOptimizer_S_Matrix;
+	float** L_AdamOptimizer_Corrected_V_Matrix;
+	float** L_AdamOptimizer_Corrected_S_Matrix;
 
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
@@ -49,6 +53,7 @@ public:
 	void LayerFilterInitialization();
 	void LayerFlipFilter();
 	void LayerPadBackpropInput();
+	void LayerUpdate();
 	void UpdateModule() override;
 	void Dialate(float* _input, float* _output);
 	void InitializeFilter();
