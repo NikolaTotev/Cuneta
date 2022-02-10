@@ -10,6 +10,7 @@
 #include "FolderManager.cuh"
 #include "ImageIngester.cuh"
 #include "Logger.cuh"
+#include "SumBlock.cuh"
 #include "Test_Utils.cuh"
 using namespace std;
 int main()
@@ -21,9 +22,276 @@ int main()
 	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\processed_data";
 	string imageName = "Ingester_Ground_Truth_Test";
 
-	TransposeConvolution tconv = TransposeConvolution(3, 2, 4, 2, 4, 6);
-	tconv.LayerFilterInitialization();
+	Convolution conv = Convolution(3, 2, 4, 2, 4, 6);
+	conv.LayerFilterInitialization();
+
+
 	int counter = 1;
+
+	float** dummyFilters = new float* [8];
+
+	for (int j = 0; j < 8; ++j)
+	{
+		dummyFilters[j] = new float[6 * 6];
+
+		for (int i = 0; i < 6 * 6; ++i)
+		{
+			dummyFilters[j][i] = 1;
+		}
+	}
+
+	float** dummyGradients = new float* [8];
+	
+	for (int j = 0; j < 8; ++j)
+	{
+		dummyGradients[j] = new float[6 * 6];
+
+		for (int i = 0; i <6*6; ++i)
+		{
+			dummyGradients[j][i] = 2;
+		}
+	}
+
+	SumBlock blocky = SumBlock(6, 6, 8);
+	blocky.Sum(dummyFilters, dummyGradients);
+	//conv.L_Filters = dummyFilters;
+	//conv.L_Filter_BACKPROP_RESULTS = dummyGradients;
+
+	cout << endl;
+	cout << endl;
+	cout << "============ INPUT SET 1 ============" << endl;
+
+	for (int j = 0; j < blocky.NumberOfElements; ++j)
+	{
+
+		for (int i = 0; i < blocky.Height * blocky.Width; ++i)
+		{
+			cout << blocky.InputSet_1[j][i] << " ";
+			counter++;
+			if (counter == blocky.Width + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ INPUT SET 2 ============" << endl;
+
+	for (int j = 0; j < blocky.NumberOfElements; ++j)
+	{
+
+		for (int i = 0; i < blocky.Height * blocky.Width; ++i)
+		{
+			cout << blocky.InputSet_2[j][i] << " ";
+			counter++;
+			if (counter == blocky.Width + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ SUM OUTPUT VALUES ============" << endl;
+
+	for (int j = 0; j < blocky.NumberOfElements; ++j)
+	{
+
+		for (int i = 0; i < blocky.Height * blocky.Width; ++i)
+		{
+			cout << blocky.Output[j][i] << " ";
+			counter++;
+			if (counter == blocky.Width + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	/*
+	for (int i = 0; i < conv.L_NumberOf_FILTERS; ++i)
+	{
+		conv.L_Filters[i] = new float[conv.m_FilterSize * conv.m_FilterSize];
+		conv.L_Filter_BACKPROP_RESULTS[i] = new float[conv.m_FilterSize * conv.m_FilterSize];
+	}
+
+	for (int j = 0; j < 8; ++j)
+	{
+		
+	}*/
+
+	/*conv.SetHyperParams(0.9, 0.9999, 1, 1, 2);
+
+	cout << endl;
+	cout << endl;
+	cout << "============ OLD FILTER VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_Filters[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+
+	cout << endl;
+	cout << endl;
+	cout << "============ FILTER GRADIENTS VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_Filter_BACKPROP_RESULTS[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	conv.LayerUpdate();
+
+	cout << endl;
+	cout << endl;
+	cout << "============ NEW FILTER VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_Filters[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ V MATRIX VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_AdamOptimizer_V_Matrix[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ S MATRIX VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_AdamOptimizer_S_Matrix[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ CORRECTED V MATRIX VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_AdamOptimizer_Corrected_V_Matrix[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ CORRECTED S MATRIX VALUES ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_AdamOptimizer_Corrected_S_Matrix[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}*/
+
+
+
+
+
+
+
+
+	/*int counter = 1;
 
 	float** back_inputs = new float* [2];
 
@@ -117,7 +385,7 @@ int main()
 		cout << endl;
 		cout << endl;
 
-	}
+	}*/
 		
 
 	/*int counter = 1;
