@@ -36,7 +36,7 @@ public:
 
 	float** L_BACKWARD_Pass_PADDED_INPUTS;
 	float** L_FLIPPED_Filters;
-
+	float** L_Filter_BACKPROP_RESULTS;	 
 
 
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
@@ -44,6 +44,8 @@ public:
 	void FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth);
 	void LayerForwardPass(float** _inputs) override;
 	void LayerBackwardPass(float** _backpropInput) override;
+	void LayerFilterBackprop();
+	void LayerBiasBackprop();
 	void UpdateModule() override;
 	void Dialate(float* _input, float* _output);
 	void InitializeFilter();
