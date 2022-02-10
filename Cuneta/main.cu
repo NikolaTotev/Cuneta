@@ -27,6 +27,18 @@ int main()
 
 	int counter = 1;
 
+	float** forward_inputs = new float* [4];
+
+	for (int j = 0; j < 4; ++j)
+	{
+		forward_inputs[j] = new float[8*4];
+
+		for (int i = 0; i < 8*4; ++i)
+		{
+			forward_inputs[j][i] = (j);
+		}
+	}
+
 	float** inputs = new float* [4];
 
 	for (int j = 0; j < 4; ++j)
@@ -35,19 +47,42 @@ int main()
 
 		for (int i = 0; i < 2 * 6; ++i)
 		{
-			inputs[j][i] = j+1;
+			inputs[j][i] = j + 1;
 		}
 	}
+	conv.LayerForwardPass(forward_inputs);
 	conv.LayerBackwardPass(inputs);
+	conv.LayerFilterBackprop();
 	
 	cout << endl;
 	cout << endl;
-	cout << "============ BACKPROP INPUTS ============" << endl;
+	cout << "============ FORWARD INPUTS ============" << endl;
+
+	for (int j = 0; j < conv.L_FORWARD_NumberOf_INPUTS; ++j)
+	{
+
+		for (int i = 0; i < conv.L_FORWARD_InputLayer_HEIGHT*conv.L_FORWARD_InputLayer_WIDTH; ++i)
+		{
+			cout << conv.L_FORWARD_Pass_INPUTS[j][i] << " ";
+			counter++;
+			if (counter == conv.L_FORWARD_InputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ BACKWARD INPUTS ============" << endl;
 
 	for (int j = 0; j < conv.L_BACKWARD_NumberOf_INPUTS; ++j)
 	{
 
-		for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT*conv.L_BACKWARD_InputLayer_WIDTH; ++i)
+		for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT * conv.L_BACKWARD_InputLayer_WIDTH; ++i)
 		{
 			cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
 			counter++;
@@ -62,6 +97,27 @@ int main()
 	}
 
 	cout << endl;
+	cout << endl;
+	cout << "============ BACKWARD INPUTS ============" << endl;
+
+	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	{
+
+		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		{
+			cout << conv.L_Filter_BACKPROP_RESULTS[j][i] << " ";
+			counter++;
+			if (counter == conv.m_FilterSize + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+
+	}
+	/*cout << endl;
 	cout << endl;
 	cout << "============ PADDED BACKPROP INPUTS ============" << endl;
 
@@ -125,7 +181,7 @@ int main()
 
 		cout << endl;
 		cout << endl;
-	}
+	}*/
 
 	//inputs[0] = new float[2 * 3];
 
