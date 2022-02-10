@@ -46,14 +46,14 @@ public:
 	void LayerBackwardPass(float** _backpropInput) override;
 	void LayerFilterBackprop();
 	void LayerBiasBackprop();
+	void LayerFilterInitialization();
+	void LayerFlipFilter();
+	void LayerPadBackpropInput();
 	void UpdateModule() override;
 	void Dialate(float* _input, float* _output);
 	void InitializeFilter();
-	void LayerFilterInitialization();
 	void FlipFilter();
-	void LayerFlipFilter();
 	void PadBackpropInput();
-	void LayerPadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
 };
 
