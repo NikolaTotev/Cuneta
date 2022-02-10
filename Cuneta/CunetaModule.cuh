@@ -23,7 +23,7 @@ public:
 	int L_NumberOf_FILTERS;
 
 	int L_FORWARD_NumberOf_INPUTS;
-	int L_FORWARD_NumerOf_OUTPUTS;
+	int L_FORWARD_NumberOf_OUTPUTS;
 
 	int L_BACKWARD_NumberOf_INPUTS;
 	int L_BACKWARD_NumberOf_OUTPUTS;
