@@ -120,9 +120,9 @@ __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput,
 MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
-	L_FORWARD_NumerOf_OUTPUTS = _numberOfOutputs;
+	L_FORWARD_NumberOf_OUTPUTS = _numberOfOutputs;
 
-	L_BACKWARD_NumberOf_INPUTS = L_FORWARD_NumerOf_OUTPUTS;
+	L_BACKWARD_NumberOf_INPUTS = L_FORWARD_NumberOf_OUTPUTS;
 	L_BACKWARD_NumberOf_OUTPUTS = L_FORWARD_NumberOf_INPUTS;
 
 	L_FORWARD_InputLayer_HEIGHT = _inputHeight;
@@ -138,9 +138,9 @@ MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, in
 	L_BACKWARD_OutputLayer_WIDTH = L_FORWARD_InputLayer_WIDTH;
 
 	L_FORWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
-	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 
-	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumerOf_OUTPUTS];
+	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
 }
 
@@ -300,7 +300,7 @@ void MaxPool::LayerBackwardPass(float** _backpropInput)
 
 	size_t backwardOutputByteCount = backwardOutputSize * sizeof(float);
 
-	for (int inputNumber = 0; inputNumber < L_FORWARD_NumerOf_OUTPUTS; ++inputNumber)
+	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_OUTPUTS; ++inputNumber)
 	{
 
 		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardOutputSize];
