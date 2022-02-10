@@ -21,9 +21,8 @@ int main()
 	string directory = "D:\\Documents\\Project Files\\Cuneta\\Test Files\\processed_data";
 	string imageName = "Ingester_Ground_Truth_Test";
 
-
-	Convolution conv = Convolution(3, 2, 2, 4, 8, 4);
-	conv.LayerFilterInitialization();
+	TransposeConvolution tconv = TransposeConvolution(3, 2, 4, 2, 8, 4);
+	tconv.LayerFilterInitialization();
 
 	int counter = 1;
 
@@ -31,9 +30,9 @@ int main()
 
 	for (int j = 0; j < 4; ++j)
 	{
-		forward_inputs[j] = new float[8*4];
+		forward_inputs[j] = new float[8 * 4];
 
-		for (int i = 0; i < 8*4; ++i)
+		for (int i = 0; i < 8 * 4; ++i)
 		{
 			forward_inputs[j][i] = (j);
 		}
@@ -50,22 +49,20 @@ int main()
 			inputs[j][i] = j + 1;
 		}
 	}
-	conv.LayerForwardPass(forward_inputs);
-	conv.LayerBackwardPass(inputs);
-	conv.LayerFilterBackprop();
-	
+	tconv.LayerForwardPass(forward_inputs);
+
 	cout << endl;
 	cout << endl;
 	cout << "============ FORWARD INPUTS ============" << endl;
 
-	for (int j = 0; j < conv.L_FORWARD_NumberOf_INPUTS; ++j)
+	for (int j = 0; j < tconv.L_FORWARD_NumberOf_INPUTS; ++j)
 	{
 
-		for (int i = 0; i < conv.L_FORWARD_InputLayer_HEIGHT*conv.L_FORWARD_InputLayer_WIDTH; ++i)
+		for (int i = 0; i < tconv.L_FORWARD_InputLayer_HEIGHT * tconv.L_FORWARD_InputLayer_WIDTH; ++i)
 		{
-			cout << conv.L_FORWARD_Pass_INPUTS[j][i] << " ";
+			cout << tconv.L_FORWARD_Pass_INPUTS[j][i] << " ";
 			counter++;
-			if (counter == conv.L_FORWARD_InputLayer_WIDTH + 1)
+			if (counter == tconv.L_FORWARD_InputLayer_WIDTH + 1)
 			{
 				cout << endl;
 				counter = 1;
@@ -77,16 +74,16 @@ int main()
 
 	cout << endl;
 	cout << endl;
-	cout << "============ BACKWARD INPUTS ============" << endl;
+	cout << "============ PADDED FORWARD INPUTS ============" << endl;
 
-	for (int j = 0; j < conv.L_BACKWARD_NumberOf_INPUTS; ++j)
+	for (int j = 0; j < tconv.L_FORWARD_NumberOf_INPUTS; ++j)
 	{
-
-		for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT * conv.L_BACKWARD_InputLayer_WIDTH; ++i)
+		
+		for (int i = 0; i < tconv.L_FORWARD_InputLayer_PADDED_HEIGHT * tconv.L_FORWARD_InputLayer_PADDED_WIDTH; ++i)
 		{
-			cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
+			cout << tconv.L_FORWARD_Pass_PADDED_INPUTS[j][i] << " ";
 			counter++;
-			if (counter == conv.L_BACKWARD_InputLayer_WIDTH + 1)
+			if (counter == tconv.L_FORWARD_InputLayer_PADDED_WIDTH + 1)
 			{
 				cout << endl;
 				counter = 1;
@@ -98,16 +95,16 @@ int main()
 
 	cout << endl;
 	cout << endl;
-	cout << "============ BACKWARD INPUTS ============" << endl;
+	cout << "============ FILTER INPUTS ============" << endl;
 
-	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	for (int j = 0; j < tconv.L_NumberOf_FILTERS; ++j)
 	{
 
-		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+		for (int i = 0; i < tconv.m_FilterSize * tconv.m_FilterSize; ++i)
 		{
-			cout << conv.L_Filter_BACKPROP_RESULTS[j][i] << " ";
+			cout << tconv.L_Filters[j][i] << " ";
 			counter++;
-			if (counter == conv.m_FilterSize + 1)
+			if (counter == tconv.m_FilterSize + 1)
 			{
 				cout << endl;
 				counter = 1;
@@ -117,6 +114,125 @@ int main()
 		cout << endl;
 
 	}
+
+	cout << endl;
+	cout << endl;
+	cout << "============ FORWARD OUTPUTS ============" << endl;
+
+	for (int j = 0; j < tconv.L_FORWARD_NumberOf_OUTPUTS; ++j)
+	{
+
+		for (int i = 0; i < tconv.L_FORWARD_OutputLayer_HEIGHT * tconv.L_FORWARD_OutputLayer_WIDTH; ++i)
+		{
+			cout << tconv.L_FORWARD_Pass_OUTPUTS[j][i] << " ";
+			counter++;
+			if (counter == tconv.L_FORWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				counter = 1;
+			}
+		}
+		cout << endl;
+		cout << endl;
+	}
+
+
+
+	//Convolution conv = Convolution(3, 2, 2, 4, 8, 4);
+	//conv.LayerFilterInitialization();
+
+	//int counter = 1;
+
+	//float** forward_inputs = new float* [4];
+
+	//for (int j = 0; j < 4; ++j)
+	//{
+	//	forward_inputs[j] = new float[8*4];
+
+	//	for (int i = 0; i < 8*4; ++i)
+	//	{
+	//		forward_inputs[j][i] = (j);
+	//	}
+	//}
+
+	//float** inputs = new float* [4];
+
+	//for (int j = 0; j < 4; ++j)
+	//{
+	//	inputs[j] = new float[2 * 6];
+
+	//	for (int i = 0; i < 2 * 6; ++i)
+	//	{
+	//		inputs[j][i] = j + 1;
+	//	}
+	//}
+	//conv.LayerForwardPass(forward_inputs);
+	//conv.LayerBackwardPass(inputs);
+	//conv.LayerFilterBackprop();
+	//
+	//cout << endl;
+	//cout << endl;
+	//cout << "============ FORWARD INPUTS ============" << endl;
+
+	//for (int j = 0; j < conv.L_FORWARD_NumberOf_INPUTS; ++j)
+	//{
+
+	//	for (int i = 0; i < conv.L_FORWARD_InputLayer_HEIGHT*conv.L_FORWARD_InputLayer_WIDTH; ++i)
+	//	{
+	//		cout << conv.L_FORWARD_Pass_INPUTS[j][i] << " ";
+	//		counter++;
+	//		if (counter == conv.L_FORWARD_InputLayer_WIDTH + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//	cout << endl;
+	//}
+
+	//cout << endl;
+	//cout << endl;
+	//cout << "============ BACKWARD INPUTS ============" << endl;
+
+	//for (int j = 0; j < conv.L_BACKWARD_NumberOf_INPUTS; ++j)
+	//{
+
+	//	for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT * conv.L_BACKWARD_InputLayer_WIDTH; ++i)
+	//	{
+	//		cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
+	//		counter++;
+	//		if (counter == conv.L_BACKWARD_InputLayer_WIDTH + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//	cout << endl;
+	//}
+
+	//cout << endl;
+	//cout << endl;
+	//cout << "============ BACKWARD INPUTS ============" << endl;
+
+	//for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
+	//{
+
+	//	for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
+	//	{
+	//		cout << conv.L_Filter_BACKPROP_RESULTS[j][i] << " ";
+	//		counter++;
+	//		if (counter == conv.m_FilterSize + 1)
+	//		{
+	//			cout << endl;
+	//			counter = 1;
+	//		}
+	//	}
+	//	cout << endl;
+	//	cout << endl;
+
+	//}
 	/*cout << endl;
 	cout << endl;
 	cout << "============ PADDED BACKPROP INPUTS ============" << endl;
