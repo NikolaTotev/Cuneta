@@ -24,4 +24,5 @@ public:
 	void AddErrorScore(string outputDirectory, float scoreToAdd, int iteration);
 	void AddImageNameToProcessingHistory(string outputDirectory, string imagePath, int iteration);
 	void SaveFilter(float* filter, int filterSize, string outputDirectory, string layer, int iteration);
+	void SaveOutput(float* cunetaOutput, int height, int width, string outputDirectory, string layer, int iteration, int ephoc);
 };
