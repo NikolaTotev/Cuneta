@@ -70,7 +70,51 @@ __global__ void TransposeConvolutionKernel(float* d_Input, float* d_Filter, floa
 	d_Output[outputArrayIndex] = result;
 };
 
-__global__ void LayerTransposeConvolutionKernel(float** _inputs, float** _filters, float** _outputs, int _numberOfOutputs, int _outputWidth, int _inputWidth, int _filterSize)
+__global__ void LayerTransposeConvolutionKernel(float** _inputs, float** _filters, float** _outputs, float** _biases, int _numberOfOutputs, int _outputWidth, int _inputWidth, int _filterSize)
+{
+	int inputSelectionIndex = threadIdx.x;
+	int filterSelectionIndex = blockIdx.z * _numberOfOutputs + threadIdx.x;
+	int biasSelectionIndex = blockIdx.z * _numberOfOutputs + threadIdx.x;
+	int outputSelectionIndex = blockIdx.z;
+
+	float* selectedInput = _inputs[inputSelectionIndex];
+	float* selectedFilter = _filters[filterSelectionIndex];
+	float* selectedBias = _biases[filterSelectionIndex];
+	float* selectedOutput = _outputs[outputSelectionIndex];
+
+	int inputStartReadRowIndex = blockIdx.x;
+	int inputStartReadColumnIndex = blockIdx.y;
+
+	int outputWriteRowIndex = blockIdx.x;
+	int outputWriteColumnIndex = blockIdx.y;
+
+	int inputArrayIndex = 0;
+
+	int outputArrayIndex = outputWriteRowIndex * _outputWidth + outputWriteColumnIndex;
+
+	float result = 0;
+	int filterIndex = 0;
+	int temp = 0;
+	for (int row = 0; row < _filterSize; row++)
+	{
+		inputStartReadColumnIndex = blockIdx.y;
+
+		for (int col = 0; col < _filterSize; col++)
+		{
+			inputArrayIndex = inputStartReadRowIndex * _inputWidth + inputStartReadColumnIndex;
+
+			result += selectedInput[inputArrayIndex] * selectedFilter[filterIndex];
+			filterIndex++;
+			inputStartReadColumnIndex += 1;
+		}
+		inputStartReadRowIndex += 1;
+	}
+
+	result += selectedBias[outputArrayIndex];
+	atomicAdd(&selectedOutput[outputArrayIndex], result);
+};
+
+__global__ void LayerTransposeConvolutionBackPropKernel(float** _inputs, float** _filters, float** _outputs, int _numberOfOutputs, int _outputWidth, int _inputWidth, int _filterSize)
 {
 	int inputSelectionIndex = threadIdx.x;
 	int filterSelectionIndex = blockIdx.z * _numberOfOutputs + threadIdx.x;
@@ -109,7 +153,7 @@ __global__ void LayerTransposeConvolutionKernel(float** _inputs, float** _filter
 	}
 
 	atomicAdd(&selectedOutput[outputArrayIndex], result);
-};
+}
 
 __global__ void PaddingKernel(float* d_UnpaddedInput, float* d_Output, int _paddedInputWidth, int _unpaddedInputWidth, int _unpaddedInputHeight)
 {
@@ -225,6 +269,45 @@ __global__ void TransposeConvFilterUpdateKernel(float** _currentFilters, float**
 		for (int columnIndex = 0; columnIndex < _filterSize; ++columnIndex)
 		{
 			int index = rowIndex * _filterSize + columnIndex;
+
+			float filterBackpropValue = selectedGradient[index];
+			float oldV = selected_V_Matrix[index];
+			float oldS = selected_S_Matrix[index];
+
+			float newV = _HyperParam_Beta1 * oldV + (1 - _HyperParam_Beta1) * filterBackpropValue;
+			float newS = _HyperParam_Beta2 * oldS + (1 - _HyperParam_Beta2) * filterBackpropValue;
+
+			float newVCorrected = newV / (1 - pow(_HyperParam_Beta1, _HyperParam_T));
+			float newSCorrected = newS / (1 - pow(_HyperParam_Beta2, _HyperParam_T));
+
+			selected_V_Matrix[index] = newV;
+			selected_S_Matrix[index] = newS;
+
+			selected_Corrected_V_Matrix[index] = newVCorrected;
+			selected_Corrected_S_Matrix[index] = newSCorrected;
+
+			float oldFilterValue = selectedFilter[index];
+			float newF = oldFilterValue - _HyperParam_alpha * (newVCorrected / sqrt(newSCorrected + _HyperParam_Epsilon));
+
+			selectedFilter[index] = newF;
+		}
+	}
+}
+
+__global__ void TransposeConvBiasUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _height, int _width, int _HyperParam_Beta1, int _HyperParam_Beta2, int _HyperParam_T, int _HyperParam_alpha, int _HyperParam_Epsilon)
+{
+	float* selectedFilter = _currentFilters[blockIdx.x];
+	float* selectedGradient = _filterGradients[blockIdx.x];
+	float* selected_V_Matrix = _VMatricies[blockIdx.x];
+	float* selected_S_Matrix = _SMatricies[blockIdx.x];
+	float* selected_Corrected_V_Matrix = _V_CorrectedMatrices[blockIdx.x];
+	float* selected_Corrected_S_Matrix = _S_CorrectedMatricies[blockIdx.x];
+
+	for (int rowIndex = 0; rowIndex < _height; ++rowIndex)
+	{
+		for (int columnIndex = 0; columnIndex < _width; ++columnIndex)
+		{
+			int index = rowIndex * _width + columnIndex;
 
 			float filterBackpropValue = selectedGradient[index];
 			float oldV = selected_V_Matrix[index];
@@ -377,10 +460,13 @@ void TransposeConvolution::LayerForwardPass(float** _inputs)
 	
 	int filterSize = m_FilterSize * m_FilterSize;
 
+	int biasSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+
 	int outputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
 	size_t inputByteCount = inputSize * sizeof(float);
 	size_t filterByteCount = filterSize * sizeof(float);
+	size_t biasByteCount = biasSize * sizeof(float);
 	size_t outputByteCount = outputSize * sizeof(float);
 
 	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_INPUTS; ++inputNumber)
@@ -407,8 +493,11 @@ void TransposeConvolution::LayerForwardPass(float** _inputs)
 
 	float** h_Inputs = new float* [L_FORWARD_NumberOf_INPUTS];  //(float**)malloc(L_FORWARD_NumberOf_INPUTS * sizeof(int*));
 	float** h_Filters = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_Biases = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
 	float** h_Outputs = new float* [L_FORWARD_NumberOf_OUTPUTS]; //(float**)malloc(L_FORWARD_NumberOf_OUTPUTS * sizeof(int*));
 
+	float** d_BiasesPointerArray;
+	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(float));
 
 	float** d_InputPointerArray;
 	cudaMalloc((void**)&d_InputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(int*));
@@ -432,6 +521,11 @@ void TransposeConvolution::LayerForwardPass(float** _inputs)
 		cudaMemcpy(h_Filters[i], L_Filters[i], filterByteCount, cudaMemcpyHostToDevice);
 	}
 
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaMalloc(&h_Biases[i], filterByteCount);
+		cudaMemcpy(h_Biases[i], L_Biases[i], biasByteCount, cudaMemcpyHostToDevice);
+	}
+
 	for (size_t i = 0; i < L_FORWARD_NumberOf_OUTPUTS; i++) {
 		cudaMalloc(&h_Outputs[i], outputByteCount);
 		cudaMemset(&h_Outputs[i], 0, outputByteCount);
@@ -440,12 +534,14 @@ void TransposeConvolution::LayerForwardPass(float** _inputs)
 	// fixup top level device array pointer to point to array of device row-pointers
 	cudaMemcpy(d_InputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_FilterPointerArray, h_Filters, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_BiasesPointerArray, h_Biases, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+
 	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_FORWARD_NumberOf_OUTPUTS * sizeof(float*), cudaMemcpyHostToDevice);
 
 	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
 
-	LayerTransposeConvolutionKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, L_FORWARD_NumberOf_OUTPUTS, L_FORWARD_OutputLayer_WIDTH, L_FORWARD_InputLayer_PADDED_WIDTH, m_FilterSize);
+	LayerTransposeConvolutionKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray,d_BiasesPointerArray , L_FORWARD_NumberOf_OUTPUTS, L_FORWARD_OutputLayer_WIDTH, L_FORWARD_InputLayer_PADDED_WIDTH, m_FilterSize);
 	cudaDeviceSynchronize();
 	float* temp = new float[outputSize];
 	cudaMemcpy(h_Outputs, d_OutputPointerArray, L_FORWARD_NumberOf_OUTPUTS * sizeof(int*), cudaMemcpyDeviceToHost);
@@ -611,7 +707,7 @@ void TransposeConvolution::LayerBackwardPass(float** _backpropInput)
 	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
 
-	LayerTransposeConvolutionKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, L_BACKWARD_NumberOf_INPUTS, L_BACKWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_WIDTH, m_FilterSize);
+	LayerTransposeConvolutionBackPropKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, L_BACKWARD_NumberOf_INPUTS, L_BACKWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_WIDTH, m_FilterSize);
 	cudaDeviceSynchronize();
 	float* temp = new float[outputSize];
 	cudaMemcpy(h_Outputs, d_OutputPointerArray, L_BACKWARD_NumberOf_OUTPUTS * sizeof(int*), cudaMemcpyDeviceToHost);
@@ -807,15 +903,6 @@ void TransposeConvolution::LayerFlipFilter()
 	delete[] temp;
 }
 
-void TransposeConvolution::LayerBiasBackprop()
-{
-	
-}
-
-
-
-
-
 void TransposeConvolution::FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth)
 {
 	size_t fwdInputElementCount = m_PaddedInputHeight * m_PaddedInputWidth;  ///OK
@@ -1004,6 +1091,130 @@ void TransposeConvolution::LayerUpdate()
 
 	delete[] h_Filters;
 	delete[] h_FilterGradients;
+	delete[] h_V_Matricies;
+	delete[] h_S_Matricies;
+	delete[] h_V_CORRECTED_Matricies;
+	delete[] h_S_CORRECTED_Matricies;
+}
+
+void TransposeConvolution::LayerBiasUpdate()
+{
+	int biasMatrixSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+
+	size_t biasMatrixByteCount = biasMatrixSize * sizeof(float);
+
+
+	int numberOfBlocks_X = L_NumberOf_FILTERS;
+	int numberOfThreadsPerBlock = 1;
+
+	// create intermediate host array for storage of device row-pointers
+
+	// create top-level device array pointer
+	float** h_Biases = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_BiasGradients = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_V_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_S_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_V_CORRECTED_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_S_CORRECTED_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+
+
+	float** d_BiasPointers;
+	cudaMalloc((void**)&d_BiasPointers, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_BiasGradientPointers;
+	cudaMalloc((void**)&d_BiasGradientPointers, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_V_Matricies;
+	cudaMalloc((void**)&d_V_Matricies, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_S_Matricies;
+	cudaMalloc((void**)&d_S_Matricies, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_V_CORRECTED_Matricies;
+	cudaMalloc((void**)&d_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*));
+
+	float** d_S_CORRECTED_Matricies;
+	cudaMalloc((void**)&d_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*));
+
+
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+		cudaMalloc(&h_Biases[i], biasMatrixByteCount);
+		cudaMemcpy(h_Biases[i], L_Biases[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+
+		cudaMalloc(&h_BiasGradients[i], biasMatrixByteCount);
+		cudaMemcpy(h_BiasGradients[i], L_BACKWARD_Pass_INPUTS[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+
+		cudaMalloc(&h_V_Matricies[i], biasMatrixByteCount);
+		cudaMemcpy(h_V_Matricies[i], L_BIAS_AdamOptimizer_V_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+
+		cudaMalloc(&h_S_Matricies[i], biasMatrixByteCount);
+		cudaMemcpy(h_S_Matricies[i], L_BIAS_AdamOptimizer_S_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+
+		cudaMalloc(&h_V_CORRECTED_Matricies[i], biasMatrixByteCount);
+		cudaMemcpy(h_V_CORRECTED_Matricies[i], L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+
+		cudaMalloc(&h_S_CORRECTED_Matricies[i], biasMatrixByteCount);
+		cudaMemcpy(h_S_CORRECTED_Matricies[i], L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+	}
+
+
+	// fixup top level device array pointer to point to array of device row-pointers
+	cudaMemcpy(d_BiasPointers, h_Biases, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_BiasGradientPointers, h_BiasGradients, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_V_Matricies, h_V_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_S_Matricies, h_S_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_S_CORRECTED_Matricies, h_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+
+
+	dim3 blockGrid(numberOfBlocks_X, 1, 1); ///OK
+	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
+
+	TransposeConvBiasUpdateKernel << <blockGrid, threads >> > (d_BiasPointers, d_BiasGradientPointers, d_V_Matricies, d_S_Matricies, d_V_CORRECTED_Matricies, d_S_CORRECTED_Matricies, L_FORWARD_OutputLayer_HEIGHT, L_FORWARD_OutputLayer_WIDTH, m_HyperParam_Beta1, m_HyperParam_Beta2, m_HyperParam_T, m_HyperParam_alpha, m_HyperParam_Epsilon);
+	cudaDeviceSynchronize();
+
+	float* temp = new float[biasMatrixByteCount];
+
+	cudaMemcpy(h_Biases, d_BiasPointers, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_BiasGradients, d_BiasGradientPointers, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_V_Matricies, d_V_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_S_Matricies, d_S_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_S_CORRECTED_Matricies, h_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+
+	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
+
+		cudaMemcpy(temp, h_Biases[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_Biases[i], temp, biasMatrixByteCount);
+		cudaFree(h_Biases[i]);
+
+		cudaMemcpy(temp, h_V_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_BIAS_AdamOptimizer_V_Matrix[i], temp, biasMatrixByteCount);
+		cudaFree(h_V_Matricies[i]);
+
+		cudaMemcpy(temp, h_S_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_BIAS_AdamOptimizer_S_Matrix[i], temp, biasMatrixByteCount);
+		cudaFree(h_S_Matricies[i]);
+
+		cudaMemcpy(temp, h_V_CORRECTED_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], temp, biasMatrixByteCount);
+		cudaFree(h_V_CORRECTED_Matricies[i]);
+
+		cudaMemcpy(temp, h_S_CORRECTED_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
+		memcpy(L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], temp, biasMatrixByteCount);
+		cudaFree(h_S_CORRECTED_Matricies[i]);
+	}
+
+	cudaFree(d_BiasPointers);
+	cudaFree(d_BiasGradientPointers);
+	cudaFree(d_V_Matricies);
+	cudaFree(d_S_Matricies);
+	cudaFree(h_V_CORRECTED_Matricies);
+	cudaFree(h_S_CORRECTED_Matricies);
+
+	delete[] h_Biases;
+	delete[] h_BiasGradients;
 	delete[] h_V_Matricies;
 	delete[] h_S_Matricies;
 	delete[] h_V_CORRECTED_Matricies;
