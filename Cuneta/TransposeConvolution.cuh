@@ -46,6 +46,12 @@ public:
 	float** L_AdamOptimizer_Corrected_V_Matrix;
 	float** L_AdamOptimizer_Corrected_S_Matrix;
 
+	float** L_Biases;
+	float** L_BIAS_AdamOptimizer_V_Matrix;
+	float** L_BIAS_AdamOptimizer_S_Matrix;
+	float** L_BIAS_AdamOptimizer_Corrected_V_Matrix;
+	float** L_BIAS_AdamOptimizer_Corrected_S_Matrix;
+
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void FilterBackprop(float* backpropInput, int backPassHeight, int backPassWidth);
@@ -58,7 +64,7 @@ public:
 	void LayerForwardPass(float** _inputs) override;
 	void LayerBackwardPass(float** _backpropInput) override;
 	void LayerFilterBackprop();
-	void LayerBiasBackprop();
+	void LayerBiasUpdate();
 	void LayerFilterInitialization();
 	void LayerFlipFilter();
 	void LayerPadInput();
