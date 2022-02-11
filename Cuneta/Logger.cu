@@ -551,4 +551,27 @@ void CunetaLogger::SaveFilter(float* filter, int filterSize, string outputDirect
 }
 
 
+void CunetaLogger::SaveOutput(float* cunetaOutput, int height, int width ,string outputDirectory, string layer, int iteration, int ephoc)
+{
 
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "FilterSave_";
+	logFilePath += layer;
+	logFilePath += "_";
+	logFilePath += to_string(iteration);
+	logFilePath += ".cunetalog";
+
+	ofstream output(logFilePath);
+
+	output << height << " " << width << " ";
+
+	for (int i = 0; i < height * width; ++i)
+	{
+		output << cunetaOutput[i] << " ";
+	}
+
+	output << endl;
+	output.close();
+}
