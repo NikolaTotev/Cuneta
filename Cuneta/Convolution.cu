@@ -74,12 +74,12 @@ __global__ void LayerConvolutionKernel(float** _inputs, float** _filters, float*
 {
 	int inputSelectionIndex = threadIdx.x;
 	int filterSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
-	int biasSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
+	//int biasSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
 	int outputSelectionIndex = blockIdx.z;
 
 	float* selectedInput = _inputs[inputSelectionIndex];
 	float* selectedFilter = _filters[filterSelectionIndex];
-	float* selectedBias = _biases[filterSelectionIndex];
+	//float* selectedBias = _biases[biasSelectionIndex];
 	float* selectedOutput = _outputs[outputSelectionIndex];
 
 	int inputStartReadRowIndex = blockIdx.x;
@@ -110,7 +110,8 @@ __global__ void LayerConvolutionKernel(float** _inputs, float** _filters, float*
 		inputStartReadRowIndex += 1;
 	}
 
-	result += selectedBias[outputArrayIndex];
+	
+	//result += selectedBias[outputArrayIndex];
 	atomicAdd(&selectedOutput[outputArrayIndex], result);
 };
 
@@ -151,11 +152,15 @@ __global__ void LayerBackpropConvolutionKernel(float** _inputs, float** _filters
 		}
 		inputStartReadRowIndex += 1;
 	}
-	/*if(blockIdx.z == 1 && threadIdx.x == 1)
+	if(blockIdx.z == 0 && threadIdx.x == 0)
 	{
-		selectedOutput[outputArrayIndex] = result;
+		
 	}
-	*/
+	//selectedOutput[0] = _numberOfOutputs;
+	
+	
+
+	
 	atomicAdd(&selectedOutput[outputArrayIndex], result);
 }
 
@@ -404,7 +409,8 @@ Convolution::Convolution(int _filterSize, int _paddingSize, int _numberOfInputs,
 		memset(L_AdamOptimizer_Corrected_S_Matrix[i], 0, byteCount);
 	}
 
-	InitializeFilter();
+	LayerFilterInitialization();
+	LayerBiasInitialization();
 }
 
 
@@ -758,10 +764,10 @@ void Convolution::LayerForwardPass(float** _inputs)
 
 		cudaMemcpy(temp, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
 		memcpy(L_FORWARD_Pass_OUTPUTS[i], temp, outputByteCount);
-		//cudaFree(h_Outputs[i]);
+		cudaFree(h_Outputs[i]);
 	}
-	//cudaFree(d_OutputPointerArray);
-	//delete[] h_Outputs;
+	cudaFree(d_OutputPointerArray);
+	delete[] h_Outputs;
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
@@ -856,7 +862,7 @@ void Convolution::LayerBackwardPass(float** _backpropInput)
 	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
 
-	LayerBackpropConvolutionKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, L_BACKWARD_NumberOf_OUTPUTS, L_BACKWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_PADDED_WIDTH, m_FilterSize);
+	LayerBackpropConvolutionKernel << <blockGrid, threads >> > (d_InputPointerArray, d_FilterPointerArray, d_OutputPointerArray, L_BACKWARD_NumberOf_INPUTS, L_BACKWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_PADDED_WIDTH, m_FilterSize);
 	cudaDeviceSynchronize();
 	float* temp = new float[outputSize];
 	cudaMemcpy(h_Outputs, d_OutputPointerArray, L_BACKWARD_NumberOf_OUTPUTS * sizeof(int*), cudaMemcpyDeviceToHost);
@@ -864,10 +870,10 @@ void Convolution::LayerBackwardPass(float** _backpropInput)
 
 		cudaMemcpy(temp, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
 		memcpy(L_BACKWARD_Pass_OUTPUTS[i], temp, outputByteCount);
-		//cudaFree(h_Outputs[i]);
+		cudaFree(h_Outputs[i]);
 	}
-	//cudaFree(d_OutputPointerArray);
-	//delete[] h_Outputs;
+	cudaFree(d_OutputPointerArray);
+	delete[] h_Outputs;
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_BACKWARD_NumberOf_INPUTS; i++) {
@@ -1301,7 +1307,7 @@ void Convolution::LayerFilterInitialization()
 {
 	std::random_device rd{};
 	std::mt19937 gen{ rd() };
-	std::normal_distribution<> distribution{ 1,2 };
+	std::normal_distribution<> distribution{ 0,1 };
 
 	int filterElementCount = m_FilterSize * m_FilterSize;
 
@@ -1312,6 +1318,25 @@ void Convolution::LayerFilterInitialization()
 		for (int i = 0; i < filterElementCount; ++i)
 		{
 			L_Filters[filterNumber][i] = i + 1; //distribution(gen);
+		}
+	}
+}
+
+void Convolution::LayerBiasInitialization()
+{
+	std::random_device rd{};
+	std::mt19937 gen{ rd() };
+	std::normal_distribution<> distribution{ 0,1 };
+
+	int biasElementCount = L_FORWARD_OutputLayer_HEIGHT* L_FORWARD_OutputLayer_WIDTH;
+
+	for (int biasNumber = 0; biasNumber < L_NumberOf_FILTERS; ++biasNumber)
+	{
+		L_Biases[biasNumber] = new float[biasElementCount];
+
+		for (int i = 0; i < biasElementCount; ++i)
+		{
+			L_Biases[biasNumber][i] = 1; //distribution(gen);
 		}
 	}
 }
