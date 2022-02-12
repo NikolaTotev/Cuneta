@@ -31,7 +31,8 @@
 #define __CUDACC_RTC__
 #endif
 
-#include <device_functions.h>using namespace std;
+#include <device_functions.h>
+using namespace std;
 
 __global__ void TransposeConvolutionKernel(float* d_Input, float* d_Filter, float* d_Output, int _outputWidth, int _convolutionInputWidth, int filterHeight, int filterWidth)
 {
@@ -370,12 +371,19 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize, in
 	L_FLIPPED_Filters = new float* [L_NumberOf_FILTERS];
 	L_Filter_BACKPROP_RESULTS = new float* [L_NumberOf_FILTERS];
 
-	L_Baises = new float[L_NumberOf_FILTERS];
+	L_Baises = new float*[L_NumberOf_FILTERS];
+	L_PrevBiases = new float* [L_NumberOf_FILTERS];
 
 	L_AdamOptimizer_V_Matrix = new float* [L_NumberOf_FILTERS];
 	L_AdamOptimizer_S_Matrix = new float* [L_NumberOf_FILTERS];
 	L_AdamOptimizer_Corrected_V_Matrix = new float* [L_NumberOf_FILTERS];
 	L_AdamOptimizer_Corrected_S_Matrix = new float* [L_NumberOf_FILTERS];
+
+	L_BIAS_AdamOptimizer_V_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_S_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_Corrected_V_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_Corrected_S_Matrix = new float* [L_NumberOf_FILTERS];
+	
 
 	for (int i = 0; i < L_NumberOf_FILTERS; ++i)
 	{
@@ -389,6 +397,18 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize, in
 		memset(L_AdamOptimizer_S_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_S_Matrix[i], 0, byteCount);
+
+		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_Corrected_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_Corrected_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+
+		size_t biasByteCount = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH * sizeof(float);
+		memset(L_BIAS_AdamOptimizer_V_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_S_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], 0, biasByteCount);
 	}
 
 	InitializeFilter();
@@ -1374,4 +1394,352 @@ void TransposeConvolution::FlipFilter()
 	for (int i = filterArraySize - 1; i >= 0; ) {
 		m_FlippedFilter[k++] = m_Filter[i--];
 	}
+}
+
+void TransposeConvolution::DebugPrintAll()
+{
+	int newLineCounter = 1;
+
+	cout << "========================================================" << endl;
+	cout << "============ Transpose Conv Debug Print All ============" << endl;
+	cout << "========================================================" << endl;
+
+	cout << "Squishy: " << endl;
+	cout << "Layer ID: " << layerID << endl;
+	cout << "Level ID: " << levelID << endl;
+	cout << "Hyper parameters: " << endl;
+	cout << "Beta 1: " << m_HyperParam_Beta1 << endl;
+	cout << "Beta 2: " << m_HyperParam_Beta2 << endl;
+	cout << "Epsilon: " << m_HyperParam_Epsilon << endl;
+	cout << "Alpha: " << m_HyperParam_alpha << endl;
+	cout << "T: " << m_HyperParam_T << endl;
+
+
+	cout << ">>>> Forward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_HEIGHT * L_FORWARD_InputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_InputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Normal Filter Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_Filters[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Flipped Filter Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_FLIPPED_Filters[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Forward Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_OUTPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Backward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_BACKWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_InputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Padded Backward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_PADDED_HEIGHT * L_FORWARD_InputLayer_PADDED_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_PADDED_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_InputLayer_PADDED_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Backward Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_OUTPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_BACKWARD_OutputLayer_HEIGHT * L_BACKWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_BACKWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Backprop Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_Filter_BACKPROP_RESULTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Bias Outputs Before Update <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_PrevBiases[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Bias Outputs After Update <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_Biases[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_Corrected_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_Corrected_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_Corrected_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_Corrected_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
 }
