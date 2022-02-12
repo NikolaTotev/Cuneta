@@ -19,7 +19,7 @@ public:
 	float** L_BACKWARD_Pass_INPUTS;
 	float** L_BACKWARD_Pass_OUTPUTS;
 	float** L_Filters;
-	float* L_Baises;
+	float** L_Baises;
 
 	int L_NumberOf_FILTERS;
 
