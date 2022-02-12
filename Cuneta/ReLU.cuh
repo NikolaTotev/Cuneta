@@ -19,6 +19,8 @@ public:
 	void LayerBackwardPass(float** _backpropInput) override;
 	void UpdateModule() override;
 	void PrintLayerParams();
+	void DebugPrintAll();
+
 };
 
 #endif
