@@ -19,6 +19,7 @@ public:
 	void UpdateModule() override;
 	void Print();
 	void PrintLayerParams();
+	void DebugPrintAll();
 
 	//Input and output will be in global memory. d_ shows in which memory the variables are stored.
 };
