@@ -296,6 +296,96 @@ void ReLU::UpdateModule()
 }
 
 
+void ReLU::DebugPrintAll()
+{
+	int newLineCounter = 1;
+
+	cout << "=================================================" << endl;
+	cout << "============ ReLU Debug Print All ============" << endl;
+	cout << "=================================================" << endl;
+
+	cout << "Squishy: " << endl;
+	cout << "Layer ID: " << layerID << endl;
+	cout << "Level ID: " << levelID << endl;
+
+
+	cout << ">>>> Forward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_HEIGHT * L_FORWARD_InputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_InputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Forward Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_OUTPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Backward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_BACKWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_InputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Backward Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_OUTPUTS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_BACKWARD_OutputLayer_HEIGHT * L_BACKWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_BACKWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+}
+
+
 
 
 
