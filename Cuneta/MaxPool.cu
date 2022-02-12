@@ -117,7 +117,7 @@ __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput,
 	d_Output[maxElementIndex] = d_BackpropInput[backInputIndex];
 };
 
-MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth)
+MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
 	L_FORWARD_NumberOf_OUTPUTS = _numberOfOutputs;
@@ -142,6 +142,9 @@ MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, in
 
 	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
+
+	levelID = _levelID;
+	layerID = _layerID;
 }
 
 void MaxPool::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth)
@@ -338,7 +341,33 @@ void MaxPool::LayerBackwardPass(float** _backpropInput)
 	}
 }
 
+void MaxPool::PrintLayerParams()
+{
+	cout << "===================================" << endl;
+	cout << "====== ReLU Layer Parameters ======" << endl;
+	cout << "===================================" << endl;
+	cout << "ReLU: Layer " << layerID << " " << "Level " << levelID << endl;
 
+	cout << endl;
+
+	cout << "-- Forward Dimensions --" << endl;
+	cout << "Forward Input Height: " << L_FORWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_FORWARD_OutputLayer_HEIGHT << endl;
+	cout << "Forward Input Width: " << L_FORWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_FORWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Backward Dimensions --" << endl;
+	cout << "Backward Input Height: " << L_BACKWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_BACKWARD_OutputLayer_HEIGHT << endl;
+	cout << "Backward Input Width: " << L_BACKWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_BACKWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Feature map count --" << endl;
+	cout << "Forward Input Count: " << L_FORWARD_NumberOf_INPUTS << " || Backward Input Count: " << L_BACKWARD_NumberOf_INPUTS << endl;
+	cout << "Forward Output Count: " << L_FORWARD_NumberOf_OUTPUTS << " || Backward Output Count: " << L_BACKWARD_NumberOf_OUTPUTS << endl;
+
+	cout << "===================================" << endl;
+}
 
 void MaxPool::UpdateModule()
 {
