@@ -557,11 +557,11 @@ void CunetaLogger::SaveOutput(float* cunetaOutput, int height, int width ,string
 	string logFilePath;
 	logFilePath += outputDirectory;
 	logFilePath += "\\";
-	logFilePath += "FilterSave_";
+	logFilePath += "CUNETARES_";
 	logFilePath += layer;
 	logFilePath += "_";
 	logFilePath += to_string(iteration);
-	logFilePath += ".cunetalog";
+	logFilePath += ".cuneta";
 
 	ofstream output(logFilePath);
 
