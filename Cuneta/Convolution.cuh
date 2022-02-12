@@ -44,6 +44,7 @@ public:
 	float** L_AdamOptimizer_Corrected_S_Matrix;
 
 	float** L_Biases;
+	float** L_PrevBiases;
 	float** L_BIAS_AdamOptimizer_V_Matrix;
 	float** L_BIAS_AdamOptimizer_S_Matrix;
 	float** L_BIAS_AdamOptimizer_Corrected_V_Matrix;
@@ -69,6 +70,7 @@ public:
 	void PadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
 	void Print();
+	void DebugPrintAll();
 	void PrintLayerParams();
 };
 
