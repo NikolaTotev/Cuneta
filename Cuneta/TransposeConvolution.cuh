@@ -47,6 +47,7 @@ public:
 	float** L_AdamOptimizer_Corrected_S_Matrix;
 
 	float** L_Biases;
+	float** L_PrevBiases;
 	float** L_BIAS_AdamOptimizer_V_Matrix;
 	float** L_BIAS_AdamOptimizer_S_Matrix;
 	float** L_BIAS_AdamOptimizer_Corrected_V_Matrix;
@@ -70,6 +71,7 @@ public:
 	void LayerPadInput();
 	void LayerUpdate();
 	void Print();
+	void DebugPrintAll();
 };
 
 #endif
