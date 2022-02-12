@@ -7,11 +7,14 @@
 #include "device_launch_parameters.h"
 #include <stdio.h>
 
+#include "Convolution.cuh"
+#include "Squishy.cuh"
 #include "FolderManager.cuh"
 #include "ImageIngester.cuh"
 #include "Logger.cuh"
 #include "SumBlock.cuh"
 #include "Test_Utils.cuh"
+
 using namespace std;
 
 void Train(string _dataSetDirectory, int _numberOfEpochs, bool _verboseOutputEnabled);
@@ -25,7 +28,9 @@ int main()
 	bool trainingInputCompleted;
 	string mode;
 
-	Convolution conv = Convolution(1, 0, 4, 1, 6, 4);
+	Convolution conv = Convolution(3, 2, 4, 2, 6, 4);
+
+	Squishy squoosh = Squishy(1, 0, 4, 1, 6, 4);
 
 	float** inputs = new float* [4];
 
@@ -45,13 +50,17 @@ int main()
 		back_inputs[j] = new float[4 * 6];
 		for (int i = 0; i < 6 * 4; ++i)
 		{
-			back_inputs[j][i] = 4;
+			back_inputs[j][i] = 6;
 		}
 	}
 
+	squoosh.LayerForwardPass(inputs);
+	squoosh.LayerBackwardPass(back_inputs);
+	squoosh.DebugPrintAll();
 
-	conv.LayerForwardPass(inputs);
+	/*conv.LayerForwardPass(inputs);
 	conv.LayerBackwardPass(back_inputs);
+
 	int counter = 1;
 
 	cout << "Forward inputs" << endl;
@@ -143,7 +152,11 @@ int main()
 			}
 		}
 		cout << endl;
-	}
+	}*/
+
+
+
+
 
 
 	/*cout << "Cuneta is starting..." << endl;
