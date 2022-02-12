@@ -30,7 +30,8 @@ int main()
 
 	Convolution conv = Convolution(3, 2, 4, 2, 6, 4);
 
-	Squishy squoosh = Squishy(1, 0, 4, 1, 6, 4);
+	Squishy squoosh = Squishy(1, 0, 4, 1, 6, 4, 0, 0);
+	squoosh.SetHyperParams(0.9, 0.9999, 0.001, 1, 1);
 
 	float** inputs = new float* [4];
 
@@ -57,6 +58,7 @@ int main()
 	squoosh.LayerForwardPass(inputs);
 	squoosh.LayerBackwardPass(back_inputs);
 	squoosh.DebugPrintAll();
+
 
 	/*conv.LayerForwardPass(inputs);
 	conv.LayerBackwardPass(back_inputs);
