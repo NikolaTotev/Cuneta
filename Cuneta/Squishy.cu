@@ -92,7 +92,7 @@ __global__ void SquishyLayerBackpropConvolutionKernel(float** _inputs, float** _
 	float result = 0;
 	int filterIndex = 0;
 
-	selectedOutput[outputArrayIndex] = selectedInput[inputArrayIndex]*selectedFilter[filterIndex];
+	selectedOutput[outputArrayIndex] = selectedInput[inputArrayIndex] * selectedFilter[filterIndex];
 }
 
 __global__ void SquishyLayerFilterBackpropKernel(float** _inputs, float** _outputs, float** _filterEquivalents, int _inputsWidth, int _outputsWidth, int _filterEquivsHeight, int _filterEquivsWidth, int _numberOfInputs)
@@ -176,7 +176,7 @@ __global__ void SquishyLayerPaddingKernel(float** __inputs, float** _outputs, in
 }
 
 
-__global__ void SquishyFilterUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _filterSize, int _HyperParam_Beta1, int _HyperParam_Beta2, int _HyperParam_T, int _HyperParam_alpha, int _HyperParam_Epsilon)
+__global__ void SquishyFilterUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _filterSize, float _HyperParam_Beta1, float _HyperParam_Beta2, float _HyperParam_T, float _HyperParam_alpha, float _HyperParam_Epsilon)
 {
 	float* selectedFilter = _currentFilters[blockIdx.x];
 	float* selectedGradient = _filterGradients[blockIdx.x];
@@ -210,15 +210,15 @@ __global__ void SquishyFilterUpdateKernel(float** _currentFilters, float** _filt
 			float oldFilterValue = selectedFilter[index];
 			float newF = oldFilterValue - _HyperParam_alpha * (newVCorrected / sqrt(newSCorrected + _HyperParam_Epsilon));
 
-			selectedFilter[index] = newF;
+			selectedFilter[index] = _HyperParam_alpha * (newVCorrected / sqrt(newSCorrected + _HyperParam_Epsilon));
 		}
 	}
 }
 
-__global__ void SquishyBiasUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _height, int _width, int _HyperParam_Beta1, int _HyperParam_Beta2, int _HyperParam_T, int _HyperParam_alpha, int _HyperParam_Epsilon)
+__global__ void SquishyBiasUpdateKernel(float** _currentBiasies, float** _biasGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _height, int _width, int _HyperParam_Beta1, int _HyperParam_Beta2, int _HyperParam_T, int _HyperParam_alpha, int _HyperParam_Epsilon)
 {
-	float* selectedFilter = _currentFilters[blockIdx.x];
-	float* selectedGradient = _filterGradients[blockIdx.x];
+	float* selectedBias = _currentBiasies[blockIdx.x];
+	float* selectedGradient = _biasGradients[0];
 	float* selected_V_Matrix = _VMatricies[blockIdx.x];
 	float* selected_S_Matrix = _SMatricies[blockIdx.x];
 	float* selected_Corrected_V_Matrix = _V_CorrectedMatrices[blockIdx.x];
@@ -246,15 +246,15 @@ __global__ void SquishyBiasUpdateKernel(float** _currentFilters, float** _filter
 			selected_Corrected_V_Matrix[index] = newVCorrected;
 			selected_Corrected_S_Matrix[index] = newSCorrected;
 
-			float oldFilterValue = selectedFilter[index];
-			float newF = oldFilterValue - _HyperParam_alpha * (newVCorrected / sqrt(newSCorrected + _HyperParam_Epsilon));
+			float oldFilterValue = selectedBias[index];
+			float newF =  oldFilterValue - _HyperParam_alpha * (newVCorrected / sqrt(newSCorrected + _HyperParam_Epsilon));
 
-			selectedFilter[index] = newF;
+			selectedBias[index] = newF;
 		}
 	}
 }
 
-Squishy::Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth)
+Squishy::Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID)
 {
 	m_FilterSize = _filterSize;
 	m_PaddingSize = _paddingSize;
@@ -298,7 +298,8 @@ Squishy::Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _nu
 	L_FLIPPED_Filters = new float* [L_NumberOf_FILTERS];
 	L_Filter_BACKPROP_RESULTS = new float* [L_NumberOf_FILTERS];
 
-	L_Baises = new float[L_NumberOf_FILTERS];
+	L_Baises = new float*[L_NumberOf_FILTERS];
+	L_PrevBiases = new float*[L_NumberOf_FILTERS];
 
 
 	L_AdamOptimizer_V_Matrix = new float* [L_NumberOf_FILTERS];
@@ -306,19 +307,39 @@ Squishy::Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _nu
 	L_AdamOptimizer_Corrected_V_Matrix = new float* [L_NumberOf_FILTERS];
 	L_AdamOptimizer_Corrected_S_Matrix = new float* [L_NumberOf_FILTERS];
 
+	L_BIAS_AdamOptimizer_V_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_S_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_Corrected_V_Matrix = new float* [L_NumberOf_FILTERS];
+	L_BIAS_AdamOptimizer_Corrected_S_Matrix = new float* [L_NumberOf_FILTERS];
+
 	for (int i = 0; i < L_NumberOf_FILTERS; ++i)
 	{
 		L_AdamOptimizer_V_Matrix[i] = new float[m_FilterSize * m_FilterSize];
 		L_AdamOptimizer_S_Matrix[i] = new float[m_FilterSize * m_FilterSize];
 		L_AdamOptimizer_Corrected_V_Matrix[i] = new float[m_FilterSize * m_FilterSize];
 		L_AdamOptimizer_Corrected_S_Matrix[i] = new float[m_FilterSize * m_FilterSize];
-		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		
 		size_t byteCount = m_FilterSize * m_FilterSize * sizeof(float);
 		memset(L_AdamOptimizer_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_S_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_S_Matrix[i], 0, byteCount);
+
+		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_Corrected_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+		L_BIAS_AdamOptimizer_Corrected_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+
+		size_t biasByteCount = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH * sizeof(float);
+		memset(L_BIAS_AdamOptimizer_V_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_S_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], 0, biasByteCount);
+		memset(L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], 0, biasByteCount);
 	}
+
+	levelID = _levelID;
+	layerID = _layerID;
 
 	LayerFilterInitialization();
 	LayerBiasInitialization();
@@ -560,7 +581,7 @@ void Squishy::LayerBackwardPass(float** _backpropInput)
 	}
 
 	LayerFlipFilter();
-	
+
 	int numberOfBlockx_X = L_BACKWARD_OutputLayer_HEIGHT;//L_FORWARD_OutputLayer_HEIGHT;
 	int numberOfBlocks_Y = L_BACKWARD_OutputLayer_WIDTH;//L_FORWARD_OutputLayer_WIDTH;
 	int numberOfBlocks_Z = L_BACKWARD_NumberOf_OUTPUTS;//L_FORWARD_NumberOf_OUTPUTS;
@@ -629,6 +650,10 @@ void Squishy::LayerBackwardPass(float** _backpropInput)
 	}
 	cudaFree(d_FilterPointerArray);
 	delete[] h_Filters;
+
+	LayerFilterBackprop();
+	LayerUpdate();
+	LayerBiasUpdate();
 }
 
 
@@ -848,7 +873,7 @@ void Squishy::LayerBiasUpdate()
 
 	// create top-level device array pointer
 	float** h_Biases = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
-	float** h_BiasGradients = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
+	float** h_BiasGradients = new float* [L_BACKWARD_NumberOf_INPUTS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
 	float** h_V_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
 	float** h_S_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
 	float** h_V_CORRECTED_Matricies = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(int*));
@@ -859,7 +884,7 @@ void Squishy::LayerBiasUpdate()
 	cudaMalloc((void**)&d_BiasPointers, L_NumberOf_FILTERS * sizeof(int*));
 
 	float** d_BiasGradientPointers;
-	cudaMalloc((void**)&d_BiasGradientPointers, L_NumberOf_FILTERS * sizeof(int*));
+	cudaMalloc((void**)&d_BiasGradientPointers, L_BACKWARD_NumberOf_INPUTS * sizeof(int*));
 
 	float** d_V_Matricies;
 	cudaMalloc((void**)&d_V_Matricies, L_NumberOf_FILTERS * sizeof(int*));
@@ -874,13 +899,18 @@ void Squishy::LayerBiasUpdate()
 	cudaMalloc((void**)&d_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*));
 
 
+	for (int i = 0; i < L_BACKWARD_NumberOf_INPUTS; ++i)
+	{
+		cudaMalloc(&h_BiasGradients[i], biasMatrixByteCount);
+		cudaMemcpy(h_BiasGradients[i], L_BACKWARD_Pass_INPUTS[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+	}
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 		cudaMalloc(&h_Biases[i], biasMatrixByteCount);
 		cudaMemcpy(h_Biases[i], L_Biases[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
 
-		cudaMalloc(&h_BiasGradients[i], biasMatrixByteCount);
-		cudaMemcpy(h_BiasGradients[i], L_BACKWARD_Pass_INPUTS[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+		L_PrevBiases[i] = new float[biasMatrixSize];
+		memcpy(L_PrevBiases[i], L_Biases[i], biasMatrixByteCount);
 
 		cudaMalloc(&h_V_Matricies[i], biasMatrixByteCount);
 		cudaMemcpy(h_V_Matricies[i], L_BIAS_AdamOptimizer_V_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
@@ -898,7 +928,7 @@ void Squishy::LayerBiasUpdate()
 
 	// fixup top level device array pointer to point to array of device row-pointers
 	cudaMemcpy(d_BiasPointers, h_Biases, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_BiasGradientPointers, h_BiasGradients, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_BiasGradientPointers, h_BiasGradients, L_BACKWARD_NumberOf_INPUTS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_V_Matricies, h_V_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_S_Matricies, h_S_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
@@ -908,13 +938,13 @@ void Squishy::LayerBiasUpdate()
 	dim3 blockGrid(numberOfBlocks_X, 1, 1); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
 
-	SquishyBiasUpdateKernel << <blockGrid, threads >> > (d_BiasPointers, d_BiasGradientPointers, d_V_Matricies, d_S_Matricies, d_V_CORRECTED_Matricies, d_S_CORRECTED_Matricies, L_FORWARD_OutputLayer_HEIGHT, L_FORWARD_OutputLayer_WIDTH, m_HyperParam_Beta1, m_HyperParam_Beta2, m_HyperParam_T, m_HyperParam_alpha, m_HyperParam_Epsilon);
+	SquishyBiasUpdateKernel << <blockGrid, threads >> > (d_BiasPointers, d_BiasGradientPointers, d_V_Matricies, d_S_Matricies, d_V_CORRECTED_Matricies, d_S_CORRECTED_Matricies, L_BACKWARD_InputLayer_HEIGHT, L_BACKWARD_InputLayer_WIDTH, m_HyperParam_Beta1, m_HyperParam_Beta2, m_HyperParam_T, m_HyperParam_alpha, m_HyperParam_Epsilon);
 	cudaDeviceSynchronize();
 
 	float* temp = new float[biasMatrixByteCount];
 
 	cudaMemcpy(h_Biases, d_BiasPointers, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_BiasGradients, d_BiasGradientPointers, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_BiasGradients, d_BiasGradientPointers, L_BACKWARD_NumberOf_INPUTS * sizeof(int*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_V_Matricies, d_V_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_S_Matricies, d_S_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyDeviceToHost);
@@ -991,10 +1021,12 @@ void Squishy::LayerBiasInitialization()
 
 		for (int i = 0; i < biasElementCount; ++i)
 		{
-			L_Biases[biasNumber][i] = 1; //distribution(gen);
+			L_Biases[biasNumber][i] = 2; //distribution(gen);
 		}
 	}
+
 }
+
 
 void Squishy::LayerFlipFilter()
 {
@@ -1086,19 +1118,26 @@ void Squishy::DebugPrintAll()
 {
 	int newLineCounter = 1;
 
-	cout << "================================================="<<endl;
-	cout << "============ Squishy Debug Print All ============"<<endl;
-	cout << "================================================="<<endl;
+	cout << "=================================================" << endl;
+	cout << "============ Squishy Debug Print All ============" << endl;
+	cout << "=================================================" << endl;
 
 	cout << "Squishy: " << endl;
 	cout << "Layer ID: " << layerID << endl;
 	cout << "Level ID: " << levelID << endl;
+	cout << "Hyper parameters: " << endl;
+	cout << "Beta 1: " << m_HyperParam_Beta1 << endl;
+	cout << "Beta 2: " << m_HyperParam_Beta2 << endl;
+	cout << "Epsilon: " << m_HyperParam_Epsilon << endl;
+	cout << "Alpha: " << m_HyperParam_alpha << endl;
+	cout << "T: " << m_HyperParam_T << endl;
+
 
 	cout << ">>>> Forward Inputs <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_INPUTS; ++inputIndex)
 	{
-		cout << "--- Input " << inputIndex + 1 << "---" << endl;
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
 		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_HEIGHT * L_FORWARD_InputLayer_WIDTH; ++elementIndex)
 		{
 			cout << L_FORWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
@@ -1116,12 +1155,12 @@ void Squishy::DebugPrintAll()
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
-		cout << "- Input " << inputIndex + 1 << "-" << endl;
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
 		{
 			cout << L_Filters[inputIndex][elementIndex] << " ";
 			newLineCounter++;
-			if (newLineCounter == L_FORWARD_InputLayer_WIDTH + 1)
+			if (newLineCounter == m_FilterSize + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
@@ -1135,12 +1174,12 @@ void Squishy::DebugPrintAll()
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
-		cout << "- Input " << inputIndex + 1 << "-" << endl;
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
 		{
 			cout << L_FLIPPED_Filters[inputIndex][elementIndex] << " ";
 			newLineCounter++;
-			if (newLineCounter == L_FORWARD_InputLayer_WIDTH + 1)
+			if (newLineCounter == m_FilterSize + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
@@ -1148,13 +1187,13 @@ void Squishy::DebugPrintAll()
 		}
 		cout << endl;
 	}
-	
+
 
 	cout << ">>>> Forward Outputs <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
-		cout << "- Input " << inputIndex + 1 << "-" << endl;
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
 		{
 			cout << L_FORWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
@@ -1172,7 +1211,7 @@ void Squishy::DebugPrintAll()
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
 	{
-		cout << "- Input " << inputIndex + 1 << "-" << endl;
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH; ++elementIndex)
 		{
 			cout << L_BACKWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
@@ -1187,16 +1226,215 @@ void Squishy::DebugPrintAll()
 	}
 
 
-	cout << "---- Backward Outputs ----" << endl << endl;
+	cout << ">>>> Backward Outputs <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
-		cout << "- Input " << inputIndex + 1 << "-" << endl;
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < L_BACKWARD_OutputLayer_HEIGHT * L_BACKWARD_OutputLayer_WIDTH; ++elementIndex)
 		{
 			cout << L_BACKWARD_Pass_OUTPUTS[inputIndex][elementIndex] << " ";
 			newLineCounter++;
 			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Backprop Outputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_Filter_BACKPROP_RESULTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Bias Outputs Before Update <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_PrevBiases[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << ">>>> Bias Outputs After Update <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
+		{
+			cout << L_Biases[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_Corrected_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Filter Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_AdamOptimizer_Corrected_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_Corrected_V_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> BIAS Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
+	{
+		cout << "- Element " << inputIndex + 1 << "-" << endl;
+		for (int elementIndex = 0; elementIndex < m_FilterSize * m_FilterSize; ++elementIndex)
+		{
+			cout << L_BIAS_AdamOptimizer_Corrected_S_Matrix[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == m_FilterSize + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
