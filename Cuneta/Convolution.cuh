@@ -68,6 +68,7 @@ public:
 	void FlipFilter();
 	void PadBackpropInput();
 	void SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha);
+	void Print();
 };
 
 #endif
