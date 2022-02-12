@@ -74,12 +74,12 @@ __global__ void LayerConvolutionKernel(float** _inputs, float** _filters, float*
 {
 	int inputSelectionIndex = threadIdx.x;
 	int filterSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
-	//int biasSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
+	int biasSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
 	int outputSelectionIndex = blockIdx.z;
 
 	float* selectedInput = _inputs[inputSelectionIndex];
 	float* selectedFilter = _filters[filterSelectionIndex];
-	//float* selectedBias = _biases[biasSelectionIndex];
+	float* selectedBias = _biases[biasSelectionIndex];
 	float* selectedOutput = _outputs[outputSelectionIndex];
 
 	int inputStartReadRowIndex = blockIdx.x;
@@ -111,7 +111,7 @@ __global__ void LayerConvolutionKernel(float** _inputs, float** _filters, float*
 	}
 
 	
-	//result += selectedBias[outputArrayIndex];
+	result += selectedBias[outputArrayIndex];
 	atomicAdd(&selectedOutput[outputArrayIndex], result);
 };
 
@@ -714,7 +714,7 @@ void Convolution::LayerForwardPass(float** _inputs)
 	float** h_Outputs = new float* [L_FORWARD_NumberOf_OUTPUTS]; //(float**)malloc(L_FORWARD_NumberOf_OUTPUTS * sizeof(int*));
 
 	float** d_BiasesPointerArray;
-	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(float));
+	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(int*));
 
 	float** d_InputPointerArray;
 	cudaMalloc((void**)&d_InputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(int*));
@@ -751,7 +751,7 @@ void Convolution::LayerForwardPass(float** _inputs)
 	cudaMemcpy(d_InputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_FilterPointerArray, h_Filters, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_BiasesPointerArray, h_Biases, L_NumberOf_FILTERS * sizeof(int*), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_FORWARD_NumberOf_OUTPUTS * sizeof(float*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_FORWARD_NumberOf_OUTPUTS * sizeof(int**), cudaMemcpyHostToDevice);
 
 	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
