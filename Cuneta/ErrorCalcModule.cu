@@ -268,4 +268,95 @@ void ErrorCalcModule::UpdateModule()
 
 }
 
+void ErrorCalcModule::DebugPrintAll()
+{
+	int newLineCounter = 1;
+
+	cout << "===========================================================" << endl;
+	cout << "============ Error Calc Module Debug Print All ============" << endl;
+	cout << "===========================================================" << endl;
+
+	cout << "Squishy: " << endl;
+	cout << "Layer ID: " << layerID << endl;
+	cout << "Level ID: " << levelID << endl;
+	cout << "Network error: " << networkError << endl;
+
+
+	cout << ">>>> Input <<<<" << endl << endl;
+	
+	for (int i = 0; i < m_InputMatrixHeight*m_InputMatrixWidth; ++i)
+	{
+		cout << m_InputMatrix[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth+1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+
+	cout << ">>>> Ground truth <<<<" << endl << endl;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	{
+		cout << groundTruthMatrix[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth + 1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+
+	cout << ">>>> Sigmoid Result <<<<" << endl << endl;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	{
+		cout << sigmoidResultMatrix[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth + 1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+	cout << ">>>> Cross Entropy Result <<<<" << endl << endl;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	{
+		cout << crossEntropyResultMatrix[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth + 1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+	cout << ">>>> Intermediate Sum Result <<<<" << endl << endl;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	{
+		cout << intermediateSumResult[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth + 1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+	cout << ">>>> dXdL Result <<<<" << endl << endl;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	{
+		cout << dLdXMatrix[i] << " ";
+		if (newLineCounter == m_InputMatrixWidth + 1)
+		{
+			cout << endl;
+			newLineCounter = 1;
+		}
+	}
+
+}
+
+
 
