@@ -22,7 +22,7 @@
 
 #include "device_launch_parameters.h"
 
-
+using namespace std;
 
 //Input and output will be in global memory. d_ shows in which memory the variables are stored.
 __global__ void ReLUKernel(float* d_Input, float* d_Output, int matrixWidth)
@@ -55,7 +55,7 @@ __global__ void BackpropReLUKernel(float* d_BackpropInput, float* d_FwdInput, fl
 	d_BackpropOutput[arrayIndex] = ReLUResult;///OK
 }
 
-ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth)
+ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth, int _layerID, int _levelID)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
 	L_FORWARD_NumberOf_OUTPUTS = _numberOfOutputs;
@@ -80,6 +80,9 @@ ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidt
 
 	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
+
+	levelID = _levelID;
+	layerID = _layerID;
 }
 
 
@@ -216,9 +219,9 @@ void ReLU::LayerBackwardPass(float** _backpropInput)
 	{
 		int forwardInputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
-		int backwardInputSize = L_BACKWARD_InputLayer_HEIGHT* L_BACKWARD_InputLayer_WIDTH;
+		int backwardInputSize = L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH;
 
-		int backwardOutputSize = L_BACKWARD_OutputLayer_HEIGHT* L_BACKWARD_OutputLayer_WIDTH;
+		int backwardOutputSize = L_BACKWARD_OutputLayer_HEIGHT * L_BACKWARD_OutputLayer_WIDTH;
 
 		size_t forwardInputByteCount = forwardInputSize * sizeof(float);
 
@@ -256,6 +259,34 @@ void ReLU::LayerBackwardPass(float** _backpropInput)
 		//Copy back result into host memory d_Output -> m_OutputMatrix
 		cudaMemcpy(L_BACKWARD_Pass_OUTPUTS[inputNumber], d_BackwardOutput, backwardOutputByteCount, cudaMemcpyDeviceToHost);///OK
 	}
+}
+
+void ReLU::PrintLayerParams()
+{
+	cout << "===================================" << endl;
+	cout << "====== ReLU Layer Parameters ======" << endl;
+	cout << "===================================" << endl;
+	cout << "ReLU: Layer " << layerID << " " << "Level " << levelID << endl;
+
+	cout << endl;
+
+	cout << "-- Forward Dimensions --" << endl;
+	cout << "Forward Input Height: " << L_FORWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_FORWARD_OutputLayer_HEIGHT << endl;
+	cout << "Forward Input Width: " << L_FORWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_FORWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Backward Dimensions --" << endl;
+	cout << "Backward Input Height: " << L_BACKWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_BACKWARD_OutputLayer_HEIGHT << endl;
+	cout << "Backward Input Width: " << L_BACKWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_BACKWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Feature map count --" << endl;
+	cout << "Forward Input Count: " << L_FORWARD_NumberOf_INPUTS << " || Backward Input Count: " << L_BACKWARD_NumberOf_INPUTS << endl;
+	cout << "Forward Output Count: " << L_FORWARD_NumberOf_OUTPUTS << " || Backward Output Count: " << L_BACKWARD_NumberOf_OUTPUTS << endl;
+
+	cout << "===================================" << endl;
 }
 
 
