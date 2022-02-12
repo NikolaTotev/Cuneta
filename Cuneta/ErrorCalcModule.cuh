@@ -25,7 +25,8 @@ public:
 	void PixelWiseCrossEntropy();
 	void CrossEntropySum();
 	void CalculateGradient();
-	
+	void DebugPrintAll();
+
 };
 
 #endif
