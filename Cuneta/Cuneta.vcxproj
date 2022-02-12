@@ -94,7 +94,6 @@
     <CudaCompile Include="Squishy.cu" />
     <CudaCompile Include="SumBlock.cu" />
     <CudaCompile Include="Test_Utils.cu" />
-    <CudaCompile Include="Trainer.cu" />
     <CudaCompile Include="TransposeConvolution.cu" />
     <CudaCompile Include="Utilities.cu" />
   </ItemGroup>
@@ -111,7 +110,6 @@
     <ClInclude Include="Squishy.cuh" />
     <ClInclude Include="SumBlock.cuh" />
     <ClInclude Include="Test_Utils.cuh" />
-    <ClInclude Include="Trainer.cuh" />
     <ClInclude Include="TransposeConvolution.cuh" />
     <ClInclude Include="Utilities.cuh" />
   </ItemGroup>
