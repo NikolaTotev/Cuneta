@@ -25,7 +25,7 @@ int main()
 	bool trainingInputCompleted;
 	string mode;
 
-	Convolution conv = Convolution(3, 2, 4, 2, 6, 4);
+	Convolution conv = Convolution(1, 0, 4, 1, 6, 4);
 
 	float** inputs = new float* [4];
 
@@ -38,12 +38,12 @@ int main()
 		}
 	}
 
-	float** back_inputs = new float* [2];
+	float** back_inputs = new float* [1];
 
-	for (int j = 0; j < 2; ++j)
+	for (int j = 0; j < 1; ++j)
 	{
-		back_inputs[j] = new float[4 * 2];
-		for (int i = 0; i < 2 * 4; ++i)
+		back_inputs[j] = new float[4 * 6];
+		for (int i = 0; i < 6 * 4; ++i)
 		{
 			back_inputs[j][i] = 4;
 		}
