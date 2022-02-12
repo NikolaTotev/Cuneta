@@ -11,7 +11,7 @@
 class Squishy : public CunetaModule
 {
 public:
-	Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth);
+	Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID);
 	float* m_Filter;
 	float* m_FlippedFilter;
 	float* m_PaddedBackpropInput;
@@ -44,6 +44,7 @@ public:
 	float** L_AdamOptimizer_Corrected_S_Matrix;
 
 	float** L_Biases;
+	float** L_PrevBiases;
 	float** L_BIAS_AdamOptimizer_V_Matrix;
 	float** L_BIAS_AdamOptimizer_S_Matrix;
 	float** L_BIAS_AdamOptimizer_Corrected_V_Matrix;
