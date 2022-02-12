@@ -9,7 +9,8 @@ public:
 	float* m_BackPropInputMatrix;
 	float* m_BackpropagationOutput;
 	float* m_OutputMatrix;
-
+	int layerID;
+	int levelID;
 
 	//Variables for the full layerSize
 	float** L_FORWARD_Pass_INPUTS;
