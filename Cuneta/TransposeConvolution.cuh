@@ -69,7 +69,7 @@ public:
 	void LayerFlipFilter();
 	void LayerPadInput();
 	void LayerUpdate();
-
+	void Print();
 };
 
 #endif
