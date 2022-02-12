@@ -497,7 +497,7 @@ void TransposeConvolution::LayerForwardPass(float** _inputs)
 	float** h_Outputs = new float* [L_FORWARD_NumberOf_OUTPUTS]; //(float**)malloc(L_FORWARD_NumberOf_OUTPUTS * sizeof(int*));
 
 	float** d_BiasesPointerArray;
-	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(float));
+	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(int*));
 
 	float** d_InputPointerArray;
 	cudaMalloc((void**)&d_InputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(int*));
