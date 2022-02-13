@@ -62,17 +62,20 @@ __global__ void SumKernel(float* _input_1, float* _input_2, float* _output, int 
 	}
 }
 
-SumBlock::SumBlock(int _height, int _width, int _numberOfElements)
+SumBlock::SumBlock(int _height, int _width, int _numberOfLayers, int _layerID, int _levelID)
 {
 	Height = _height;
 	Width = _width;
-	NumberOfElements = _numberOfElements;
+	NumberOfLayers = _numberOfLayers;
 
-	Output = new float* [NumberOfElements];
-	InputSet_1 = new float* [NumberOfElements];
-	InputSet_2 = new float* [NumberOfElements];
+	levelID = _levelID;
+	layerID = _layerID;
 
-	for (int i = 0; i < NumberOfElements; ++i)
+	Output = new float* [NumberOfLayers];
+	InputSet_1 = new float* [NumberOfLayers];
+	InputSet_2 = new float* [NumberOfLayers];
+
+	for (int i = 0; i < NumberOfLayers; ++i)
 	{
 		Output[i] = new float[Height * Width];
 		InputSet_1[i] = new float[Height * Width];
@@ -88,13 +91,13 @@ void SumBlock::Sum(float** _inputSet_1, float** _inputSet_2)
 
 	size_t inputByteCount = inputSize * sizeof(float);
 
-	for (int i = 0; i < NumberOfElements; ++i)
+	for (int i = 0; i < NumberOfLayers; ++i)
 	{
 		memcpy(InputSet_1[i], _inputSet_1[i], inputByteCount);
 		memcpy(InputSet_2[i], _inputSet_2[i], inputByteCount);
 	}
 
-	for (int inputNumber = 0; inputNumber < NumberOfElements; ++inputNumber)
+	for (int inputNumber = 0; inputNumber < NumberOfLayers; ++inputNumber)
 	{
 		//Define pointers for deviceMemory locations
 		float* d_Input_1;
@@ -121,5 +124,78 @@ void SumBlock::Sum(float** _inputSet_1, float** _inputSet_2)
 		cudaMemcpy(Output[inputNumber], d_Output, inputByteCount, cudaMemcpyDeviceToHost);
 	}
 }
+
+void SumBlock::DebugPrintAll()
+{
+	int newLineCounter = 1;
+
+	cout << "===================================================" << endl;
+	cout << "============ Sum Block Debug Print All ============" << endl;
+	cout << "===================================================" << endl;
+
+	cout << "Sum Block: " << endl;
+	cout << "Layer ID: " << layerID << endl;
+	cout << "Level ID: " << levelID << endl;
+	cout << "Number of layers: "<< NumberOfLayers << endl;
+	
+
+	cout << ">>>> Input Set 1 <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < NumberOfLayers; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < Height*Width; ++elementIndex)
+		{
+			cout << InputSet_1[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == Width + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Input Set 2 <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < NumberOfLayers; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < Height * Width; ++elementIndex)
+		{
+			cout << InputSet_2[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == Width + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+	cout << ">>>> Output Set<<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < NumberOfLayers; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < Height * Width; ++elementIndex)
+		{
+			cout << Output[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == Width + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
+}
+
+
+
 
 
