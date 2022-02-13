@@ -249,8 +249,6 @@ void NetworkValidator::SquishTest()
 
 void NetworkValidator::TestMaxPool()
 {
-	CunetaLogger loggy = CunetaLogger();
-
 	int Input_HEIGHT = 8;
 	int Input_WIDTH = 4;
 	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
@@ -308,7 +306,7 @@ void NetworkValidator::TestMaxPool()
 	Number_Of_OUTPUT_Layers = 4;
 
 
-	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	/*for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
 	{
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
@@ -322,7 +320,7 @@ void NetworkValidator::TestMaxPool()
 		{
 			Backprop_Inputs[j][i] = 6;
 		}
-	}
+	}*/
 
 	MaxPool testSubject2 = MaxPool(Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 
@@ -343,17 +341,19 @@ void NetworkValidator::TestMaxPool()
 	/// </summary>
 
 
-	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
-	{
-		delete[] Forward_Inputs[j];
-	}
-	delete[] Forward_Inputs;
+	//for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	//{
+	//	delete[] Forward_Inputs[j];
+	//}
 
-	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
-	{
-		delete[] Backprop_Inputs[j];
-	}
-	delete[] Backprop_Inputs;
+	//for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
+	//{
+	//	delete[] Backprop_Inputs[j];
+	//}
+
+
+	//delete[] Backprop_Inputs;
+	//delete[] Forward_Inputs;
 
 
 
@@ -364,30 +364,32 @@ void NetworkValidator::TestMaxPool()
 	Number_Of_INPUT_Layers = 4;
 	Number_Of_OUTPUT_Layers = 4;
 
-	Forward_Inputs = new float* [Number_Of_INPUT_Layers];
+	float** New_Forward_Inputs = new float* [Number_Of_INPUT_Layers];
+
 	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
 	{
-		Forward_Inputs[j] = new float[Input_LENGTH];
+		New_Forward_Inputs[j] = new float[Input_LENGTH];
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			Forward_Inputs[j][i] = rand() % range + min;
+			New_Forward_Inputs[j][i] = rand() % range + min;
 		}
 	}
 
-	Backprop_Inputs = new float* [Number_Of_OUTPUT_Layers];
+	float** New_Backprop_Inputs = new float* [Number_Of_OUTPUT_Layers];
+
 	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
 	{
-		Backprop_Inputs[j] = new float[Input_LENGTH];
+		New_Backprop_Inputs[j] = new float[Input_LENGTH];
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			Backprop_Inputs[j][i] = 6;
+			New_Backprop_Inputs[j][i] = 6;
 		}
 	}
 
 	MaxPool testSubject3 = MaxPool(Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 
-	testSubject3.LayerForwardPass(Forward_Inputs);
-	testSubject3.LayerBackwardPass(Backprop_Inputs);
+	testSubject3.LayerForwardPass(New_Forward_Inputs);
+	testSubject3.LayerBackwardPass(New_Backprop_Inputs);
 
 	cout << "========================================================================================================" << endl;
 	cout << "============================================ MAXPOOL TEST 3 ============================================" << endl;
