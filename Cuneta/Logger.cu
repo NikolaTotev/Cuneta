@@ -575,3 +575,86 @@ void CunetaLogger::SaveOutput(float* cunetaOutput, int height, int width ,string
 	output << endl;
 	output.close();
 }
+
+void CunetaLogger::Save_RELU_Test(ReLU testSubject, string outputDirectory, int testNumber)
+{
+	string logFilePath;
+	logFilePath += outputDirectory;
+	logFilePath += "\\";
+	logFilePath += "RELU_TEST_NUM_";
+	logFilePath += to_string(testNumber);
+	logFilePath += "_";
+	logFilePath += to_string(testSubject.L_FORWARD_NumberOf_INPUTS);
+	logFilePath += "_";
+	logFilePath += to_string(testSubject.L_FORWARD_NumberOf_OUTPUTS);
+	logFilePath += "_";
+	logFilePath += to_string(testSubject.L_FORWARD_InputLayer_HEIGHT);
+	logFilePath += "x";
+	logFilePath += to_string(testSubject.L_FORWARD_InputLayer_WIDTH);
+	logFilePath += ".cunetatest";
+
+	ofstream output(logFilePath);
+	output << testSubject.L_FORWARD_InputLayer_HEIGHT<< " " << testSubject.L_FORWARD_InputLayer_WIDTH << endl;
+	output << "&&" << endl;
+	output << testSubject.L_BACKWARD_InputLayer_HEIGHT << " " << testSubject.L_BACKWARD_InputLayer_WIDTH << endl;
+	output << "&&" << endl;
+	output << testSubject.L_FORWARD_OutputLayer_HEIGHT << " " << testSubject.L_FORWARD_OutputLayer_WIDTH << endl;
+	output << "&&" << endl;
+	output << testSubject.L_BACKWARD_OutputLayer_HEIGHT << " " << testSubject.L_BACKWARD_OutputLayer_WIDTH << endl;
+	output << "&&" << endl;
+	output << testSubject.L_FORWARD_NumberOf_INPUTS<< " " << testSubject.L_FORWARD_NumberOf_OUTPUTS <<endl;
+	output << "&&"<<endl;
+	output << testSubject.L_BACKWARD_NumberOf_INPUTS << " " << testSubject.L_BACKWARD_NumberOf_OUTPUTS <<endl;
+	output << "$" << endl;
+
+	//Forward pass inputs
+	for (int i = 0; i < testSubject.L_FORWARD_NumberOf_INPUTS; ++i)
+	{
+		for (int j = 0; j < testSubject.L_FORWARD_InputLayer_HEIGHT * testSubject.L_FORWARD_InputLayer_WIDTH; j++)
+		{
+			output << testSubject.L_FORWARD_Pass_INPUTS[i][j] << " ";
+		}
+		output << endl;
+		output << "*" <<endl;
+	}
+
+	output << "##" << endl; //Forward pass outputs
+
+	for (int i = 0; i < testSubject.L_FORWARD_NumberOf_OUTPUTS; ++i)
+	{
+		for (int j = 0; j < testSubject.L_FORWARD_OutputLayer_HEIGHT * testSubject.L_FORWARD_OutputLayer_WIDTH; j++)
+		{
+			output << testSubject.L_FORWARD_Pass_OUTPUTS[i][j] << " ";
+		}
+		output << endl;
+		output << "*" << endl;
+	}
+
+	output << "##" << endl; //Backward pass inputs
+
+	for (int i = 0; i < testSubject.L_BACKWARD_NumberOf_INPUTS; ++i)
+	{
+		for (int j = 0; j < testSubject.L_BACKWARD_InputLayer_HEIGHT * testSubject.L_BACKWARD_InputLayer_WIDTH; j++)
+		{
+			output << testSubject.L_BACKWARD_Pass_INPUTS[i][j] << " ";
+		}
+		output << endl;
+		output << "*" << endl;
+	}
+
+	output << "##" << endl; //Backward pass outputs
+
+	for (int i = 0; i < testSubject.L_BACKWARD_NumberOf_OUTPUTS; ++i)
+	{
+		for (int j = 0; j < testSubject.L_BACKWARD_OutputLayer_HEIGHT * testSubject.L_BACKWARD_OutputLayer_WIDTH; j++)
+		{
+			output << testSubject.L_BACKWARD_Pass_OUTPUTS[0][j] << " ";
+		}
+		output << endl;
+		output << "*" << endl;
+	}
+
+
+	output << endl;
+	output.close();
+}
