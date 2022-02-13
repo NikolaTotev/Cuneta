@@ -52,7 +52,8 @@ __global__ void BackpropReLUKernel(float* d_BackpropInput, float* d_FwdInput, fl
 		ReLUResult = 1 * backpropInputPixel;
 	}
 
-	d_BackpropOutput[arrayIndex] = ReLUResult;///OK
+	d_BackpropOutput[arrayIndex] = ReLUResult;///OK	
+
 }
 
 ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth, int _layerID, int _levelID)
@@ -78,8 +79,8 @@ ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidt
 	L_FORWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
 	L_FORWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
 
-	L_BACKWARD_Pass_INPUTS = new float* [L_FORWARD_NumberOf_OUTPUTS];
-	L_BACKWARD_Pass_OUTPUTS = new float* [L_FORWARD_NumberOf_INPUTS];
+	L_BACKWARD_Pass_INPUTS = new float* [L_BACKWARD_NumberOf_INPUTS];
+	L_BACKWARD_Pass_OUTPUTS = new float* [L_BACKWARD_NumberOf_OUTPUTS];
 
 	levelID = _levelID;
 	layerID = _layerID;
@@ -187,7 +188,7 @@ void ReLU::LayerForwardPass(float** _inputs)
 		L_FORWARD_Pass_INPUTS[inputNumber] = new float[inputSize];
 		L_FORWARD_Pass_OUTPUTS[inputNumber] = new float[outputSize];
 
-		memcpy(L_FORWARD_Pass_INPUTS[inputNumber], _inputs[inputNumber], inputSize);
+		memcpy(L_FORWARD_Pass_INPUTS[inputNumber], _inputs[inputNumber], inputByteCount);
 
 		//Define pointers for deviceMemory locations
 		float* d_Input;
@@ -215,7 +216,7 @@ void ReLU::LayerForwardPass(float** _inputs)
 
 void ReLU::LayerBackwardPass(float** _backpropInput)
 {
-	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_OUTPUTS; ++inputNumber)
+	for (int inputNumber = 0; inputNumber < L_BACKWARD_NumberOf_INPUTS; ++inputNumber)
 	{
 		int forwardInputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
@@ -230,8 +231,8 @@ void ReLU::LayerBackwardPass(float** _backpropInput)
 		size_t backwardOutputByteCount = backwardOutputSize * sizeof(float);
 
 
-		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardOutputSize];
-		L_BACKWARD_Pass_OUTPUTS[inputNumber] = new float[backwardInputSize];
+		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardInputSize];
+		L_BACKWARD_Pass_OUTPUTS[inputNumber] = new float[backwardOutputSize];
 
 		memcpy(L_BACKWARD_Pass_INPUTS[inputNumber], _backpropInput[inputNumber], backwardInputByteCount);
 
@@ -250,14 +251,17 @@ void ReLU::LayerBackwardPass(float** _backpropInput)
 		cudaMemcpy(d_FwdInput, L_FORWARD_Pass_INPUTS[inputNumber], forwardInputByteCount, cudaMemcpyHostToDevice); ///OK
 
 		//Define block size and threads per block.
-		dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
-		dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);///OK
+		dim3 blockGrid(L_FORWARD_InputLayer_HEIGHT, 1, 1);
+		dim3 threadGrid(L_FORWARD_InputLayer_WIDTH, 1, 1);
 
-		BackpropReLUKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_BackwardOutput, L_FORWARD_OutputLayer_WIDTH); ///OK
+		BackpropReLUKernel << < blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_BackwardOutput, L_FORWARD_OutputLayer_WIDTH); ///OK
 		cudaDeviceSynchronize();///OK
+		float* temp = new float[backwardOutputSize];
 
 		//Copy back result into host memory d_Output -> m_OutputMatrix
-		cudaMemcpy(L_BACKWARD_Pass_OUTPUTS[inputNumber], d_BackwardOutput, backwardOutputByteCount, cudaMemcpyDeviceToHost);///OK
+		cudaMemcpy(temp, d_BackwardOutput, backwardOutputByteCount, cudaMemcpyDeviceToHost);///OK
+		memcpy(L_BACKWARD_Pass_OUTPUTS[inputNumber], temp, backwardOutputByteCount);
+
 	}
 }
 
@@ -329,6 +333,8 @@ void ReLU::DebugPrintAll()
 
 
 	cout << ">>>> Forward Outputs <<<<" << endl << endl;
+	newLineCounter = 1;
+
 
 	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
@@ -348,6 +354,8 @@ void ReLU::DebugPrintAll()
 
 
 	cout << ">>>> Backward Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
+
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
 	{
@@ -367,6 +375,8 @@ void ReLU::DebugPrintAll()
 
 
 	cout << ">>>> Backward Outputs <<<<" << endl << endl;
+	newLineCounter = 1;
+
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
