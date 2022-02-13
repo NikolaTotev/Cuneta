@@ -263,7 +263,7 @@ void MaxPool::LayerForwardPass(float** _inputs)
 		L_FORWARD_Pass_INPUTS[inputNumber] = new float[inputSize];
 		L_FORWARD_Pass_OUTPUTS[inputNumber] = new float[outputSize];
 
-		memcpy(L_FORWARD_Pass_INPUTS[inputNumber], _inputs[inputNumber], inputSize);
+		memcpy(L_FORWARD_Pass_INPUTS[inputNumber], _inputs[inputNumber], inputByteCount);
 
 		//Define pointers for deviceMemory locations
 		float* d_Input;
@@ -303,11 +303,11 @@ void MaxPool::LayerBackwardPass(float** _backpropInput)
 
 	size_t backwardOutputByteCount = backwardOutputSize * sizeof(float);
 
-	for (int inputNumber = 0; inputNumber < L_FORWARD_NumberOf_OUTPUTS; ++inputNumber)
+	for (int inputNumber = 0; inputNumber < L_BACKWARD_NumberOf_INPUTS; ++inputNumber)
 	{
 
-		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardOutputSize];
-		L_BACKWARD_Pass_OUTPUTS[inputNumber] = new float[backwardInputSize];
+		L_BACKWARD_Pass_INPUTS[inputNumber] = new float[backwardInputSize];
+		L_BACKWARD_Pass_OUTPUTS[inputNumber] = new float[backwardOutputSize];
 
 		memcpy(L_BACKWARD_Pass_INPUTS[inputNumber], _backpropInput[inputNumber], backwardInputByteCount);
 
@@ -326,8 +326,8 @@ void MaxPool::LayerBackwardPass(float** _backpropInput)
 		cudaMemcpy(d_FwdInput, L_FORWARD_Pass_INPUTS[inputNumber], forwardInputByteCount, cudaMemcpyHostToDevice); ///OK
 
 		//Define block size and threads per block.
-		dim3 blockGrid(m_BackpropInputMatrixHeight, 1, 1); ///OK
-		dim3 threadGrid(m_BackpropInputMatrixWidth, 1, 1);///OK
+		dim3 blockGrid(L_FORWARD_InputLayer_HEIGHT, 1, 1); ///OK
+		dim3 threadGrid(L_FORWARD_InputLayer_WIDTH, 1, 1);///OK
 
 		BackpropMaxPoolKernel << <blockGrid, threadGrid >> > (d_BackpropInput, d_FwdInput, d_BackwardOutput, L_FORWARD_OutputLayer_WIDTH, L_BACKWARD_InputLayer_WIDTH); ///OK
 		cudaDeviceSynchronize();///OK
