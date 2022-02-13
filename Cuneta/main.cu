@@ -18,6 +18,7 @@
 using namespace std;
 
 void Train(string _dataSetDirectory, int _numberOfEpochs, bool _verboseOutputEnabled);
+void Test(string _testSaveDirectory);
 
 int main()
 {
@@ -27,145 +28,13 @@ int main()
 	bool enableVerboseOutput;
 	bool trainingInputCompleted;
 	string mode;
-
-	Convolution conv = Convolution(3, 2, 4, 2, 6, 4);
-
-	Squishy squoosh = Squishy(1, 0, 4, 1, 6, 4, 0, 0);
-	squoosh.SetHyperParams(0.9, 0.9999, 0.001, 1, 1);
-
-	float** inputs = new float* [4];
-
-	for (int j = 0; j < 4; ++j)
-	{
-		inputs[j] = new float[4 * 6];
-		for (int i = 0; i < 4 * 6; ++i)
-		{
-			inputs[j][i] = 1;
-		}
-	}
-
-	float** back_inputs = new float* [1];
-
-	for (int j = 0; j < 1; ++j)
-	{
-		back_inputs[j] = new float[4 * 6];
-		for (int i = 0; i < 6 * 4; ++i)
-		{
-			back_inputs[j][i] = 6;
-		}
-	}
-
-	squoosh.LayerForwardPass(inputs);
-	squoosh.LayerBackwardPass(back_inputs);
-	squoosh.DebugPrintAll();
-
-
-	/*conv.LayerForwardPass(inputs);
-	conv.LayerBackwardPass(back_inputs);
-
-	int counter = 1;
-
-	cout << "Forward inputs" << endl;
-
-	for (int j = 0; j < conv.L_FORWARD_NumberOf_INPUTS; ++j)
-	{
-		for (int i = 0; i < conv.L_FORWARD_InputLayer_HEIGHT * conv.L_FORWARD_InputLayer_WIDTH; ++i)
-		{
-			cout << conv.L_FORWARD_Pass_INPUTS[j][i];
-			counter++;
-			if(counter == conv.L_FORWARD_InputLayer_WIDTH+1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-
-	cout << "Forward filters" << endl;
-
-	for (int j = 0; j < conv.L_NumberOf_FILTERS; ++j)
-	{
-		for (int i = 0; i < conv.m_FilterSize * conv.m_FilterSize; ++i)
-		{
-			cout << conv.L_Filters[j][i] << " ";
-			counter++;
-			if (counter == conv.m_FilterSize + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-
-	cout << endl;
-	cout << "Forward Outputs" << endl;
-	counter = 1;
-
-	for (int j = 0; j < conv.L_FORWARD_NumberOf_OUTPUTS; j++)
-	{
-		for (int i = 0; i < conv.L_FORWARD_OutputLayer_HEIGHT * conv.L_FORWARD_OutputLayer_WIDTH; ++i)
-		{
-			cout << conv.L_FORWARD_Pass_OUTPUTS[j][i] << " ";
-			counter++;
-			if (counter == conv.L_FORWARD_OutputLayer_WIDTH + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-	cout << endl;
-	cout << "Backpass inputs" << endl;
-	counter = 1;
-
-	for (int j = 0; j < conv.L_FORWARD_NumberOf_OUTPUTS; ++j)
-	{
-		for (int i = 0; i < conv.L_BACKWARD_InputLayer_HEIGHT * conv.L_BACKWARD_InputLayer_WIDTH; ++i)
-		{
-			cout << conv.L_BACKWARD_Pass_INPUTS[j][i] << " ";
-			counter++;
-			if (counter == conv.L_BACKWARD_InputLayer_WIDTH + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}
-
-
-	cout << endl;
-	cout << "Backpass Outputs" << endl;
-	counter = 1;
-
-	for (int j = 0; j < conv.L_FORWARD_NumberOf_INPUTS; ++j)
-	{
-		for (int i = 0; i < conv.L_BACKWARD_OutputLayer_HEIGHT * conv.L_BACKWARD_OutputLayer_WIDTH; ++i)
-		{
-			cout << conv.L_BACKWARD_Pass_OUTPUTS[j][i] << " ";
-			counter++;
-			if (counter == conv.L_BACKWARD_OutputLayer_WIDTH + 1)
-			{
-				cout << endl;
-				counter = 1;
-			}
-		}
-		cout << endl;
-	}*/
-
-
-
-
-
-
-	/*cout << "Cuneta is starting..." << endl;
-	cout << "Welcome, what would you like to start with?";
+	
+	cout << "Cuneta is starting..." << endl;
+	cout << "Welcome, what would you like to start with?" << endl;
 
 	string userInput;
 	cin >> userInput;
+	cout << endl;
 
 	if (userInput == "Train")
 	{
@@ -300,14 +169,38 @@ int main()
 
 	if (userInput == "Test")
 	{
+		string saveDir;
+		mode = "Test";
 
+		cout << "Good idea, it's important to test things!" << endl;
+		/*cout << "Where would you like to save the test results?" << endl;
+		cin.ignore();
+		getline(cin, saveDir);
+
+		cout << endl;*/
+		//cout << "Fantastic! Preparing test mode for you!" << endl;
+		cout << "Preparing test mode for you!" << endl;
+		cout << "Enjoy and good luck! May all of the tests pass! <3" << endl;
+		NetworkValidator mrValidator = NetworkValidator(saveDir);
+		mrValidator.TestFlowController();
+
+		cout << endl;
+
+		cout << "Oooo seems like the tests are done! How did they go?" << endl;
+		cout << "Just as a reminder,  the test results can be found here:" << endl;
+		cout << saveDir;
+
+		cout << endl;
+
+		cout << "That's all for now! See you later :3" << endl;
+		
 	}
 
 	if(mode == "Train")
 	{
 		cout << "I'm done training!";
 		cout << "You can view the results here.";
-	}*/
+	}
 
 	return 0;
 }
