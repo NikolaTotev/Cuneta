@@ -14,10 +14,13 @@ public:
 	float** Output;
 	int Height;
 	int Width;
-	int NumberOfElements;
+	int NumberOfLayers;
+	int layerID;
+	int levelID;
 
-	SumBlock(int _height, int _width, int _numberOfElements);
+	SumBlock(int _height, int _width, int _numberOfLayers, int _layerID, int _levelID);
 	void Sum(float** _inputSet_1, float** _inputSet_2);
+	void DebugPrintAll(); 
 };
 
 
