@@ -12,7 +12,8 @@
 #include "TransposeConvolution.cuh"
 using namespace std;
 
-
+#ifndef LOGGER_GPU_H
+#define LOGGER_GPU_H
 class CunetaLogger
 {
 public:
@@ -25,4 +26,14 @@ public:
 	void AddImageNameToProcessingHistory(string outputDirectory, string imagePath, int iteration);
 	void SaveFilter(float* filter, int filterSize, string outputDirectory, string layer, int iteration);
 	void SaveOutput(float* cunetaOutput, int height, int width, string outputDirectory, string layer, int iteration, int ephoc);
+	void Save_RELU_Test(ReLU testSubject, string outputDirectory, int testNumber);
+	void Save_MAXPOOL_Test(ReLU reluToSave, string outputDirectory, int testNumber);
+	void Save_CONV_Test(ReLU reluToSave, string outputDirectory, int testNumber);
+	void Save_TCONV_Test(ReLU reluToSave, string outputDirectory, int testNumber);
+	void Save_SQUISH_Test(ReLU reluToSave, string outputDirectory, int testNumber);
+	void Save_SUMBLOCK_Test(ReLU reluToSave, string outputDirectory, int testNumber);
+	void Save_ERR_Test(ReLU reluToSave, string outputDirectory, int testNumber);
 };
+
+#endif
+
