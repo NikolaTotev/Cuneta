@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Squishy.cuh"
+#include "SumBlock.cuh"
 
 
 using namespace std;
@@ -468,7 +469,65 @@ void NetworkValidator::TestErrorBlock()
 
 void NetworkValidator::TestSumBlock()
 {
+	int Input_HEIGHT = 8;
+	int Input_WIDTH = 4;
+	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	int Number_Of_INPUT_Layers = 4;
+	
 
+	float** InputSet_1 = new float* [Number_Of_INPUT_Layers];
+	float** InputSet_2 = new float* [Number_Of_INPUT_Layers];
+
+
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		InputSet_1[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			InputSet_1[j][i] = 1;
+		}
+	}
+
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		InputSet_2[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			InputSet_2[j][i] = 2;
+		}
+	}
+
+	SumBlock testSubject = SumBlock(Input_HEIGHT, Input_WIDTH, Number_Of_INPUT_Layers, 0,0);
+	testSubject.Sum(InputSet_1, InputSet_2);
+
+	cout << "========================================================================================================" << endl;
+	cout << "============================================ SumBlock TEST 1 ============================================" << endl;
+	cout << "========================================================================================================" << endl;
+	cout << endl;
+
+	testSubject.DebugPrintAll();
+
+	/// <summary>
+	/// SWAP WIDTH AND HEIGHT DIMENSIONS
+	/// </summary>
+
+	Input_HEIGHT = 4;
+	Input_WIDTH = 8;
+	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	Number_Of_INPUT_Layers = 4;
+
+
+	SumBlock testSubject2 = SumBlock(Input_HEIGHT, Input_WIDTH, Number_Of_INPUT_Layers, 0, 0);
+	testSubject2.Sum(InputSet_1, InputSet_2);
+
+	cout << "========================================================================================================" << endl;
+	cout << "============================================ SumBlock TEST 2 ============================================" << endl;
+	cout << "========================================================================================================" << endl;
+	cout << endl;
+
+	testSubject2.DebugPrintAll();
 }
 
 void NetworkValidator::TestTransposeConvolution()
