@@ -1469,7 +1469,7 @@ void Convolution::DebugPrintAll()
 	cout << "============ Convolution Debug Print All ============" << endl;
 	cout << "=====================================================" << endl;
 
-	cout << "Squishy: " << endl;
+	cout << "Convolution: " << endl;
 	cout << "Layer ID: " << layerID << endl;
 	cout << "Level ID: " << levelID << endl;
 	cout << "Hyper parameters: " << endl;
