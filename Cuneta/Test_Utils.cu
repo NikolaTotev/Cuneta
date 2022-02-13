@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Squishy.cuh"
+
 
 using namespace std;
 
@@ -244,7 +246,78 @@ void NetworkValidator::TestReLU()
 
 void NetworkValidator::SquishTest()
 {
+	int Input_HEIGHT = 8;
+	int Input_WIDTH = 4;
+	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	int Number_Of_INPUT_Layers = 4;
+	int Number_Of_OUTPUT_Layers = 1;
+	int Filter_Size= 1;
+	int Padding = 0;
 
+	float HyperParam_Beta1 = 0.9;
+	float HyperParam_Beta2 = 0.9999;
+	float HyperParam_Alpha = 0.1;
+	float HyperParam_T = 1;
+	float HyperParam_Eps = 0.0001;
+
+	float** Forward_Inputs = new float* [Number_Of_INPUT_Layers];
+	float** Backprop_Inputs = new float* [Number_Of_OUTPUT_Layers];
+	
+
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		Forward_Inputs[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			Forward_Inputs[j][i] = j+1;
+		}
+	}
+
+	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
+	{
+		Backprop_Inputs[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			Backprop_Inputs[j][i] = 2;
+		}
+	}
+
+	Squishy testSubject = Squishy(Filter_Size,Padding,Number_Of_INPUT_Layers,Number_Of_OUTPUT_Layers,Input_HEIGHT, Input_WIDTH, 0,0);
+	testSubject.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
+	testSubject.LayerForwardPass(Forward_Inputs);
+	testSubject.LayerBackwardPass(Backprop_Inputs);
+
+	cout << "========================================================================================================" << endl;
+	cout << "============================================ SQUISHY TEST 1 ============================================" << endl;
+	cout << "========================================================================================================" << endl;
+	cout << endl;
+
+	testSubject.DebugPrintAll();
+
+	/// <summary>
+	/// SWAP WIDTH AND HEIGHT DIMENSIONS
+	/// </summary>
+
+	Input_HEIGHT = 4;
+	Input_WIDTH = 8;
+	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	Number_Of_INPUT_Layers = 4;
+	Number_Of_OUTPUT_Layers = 1;
+
+
+	Squishy testSubject2 = Squishy(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
+	testSubject2.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
+	testSubject2.LayerForwardPass(Forward_Inputs);
+	testSubject2.LayerBackwardPass(Backprop_Inputs);
+
+	cout << "========================================================================================================" << endl;
+	cout << "============================================ SQUISHY TEST 2 ============================================" << endl;
+	cout << "========================================================================================================" << endl;
+	cout << endl;
+
+	testSubject2.DebugPrintAll();
 }
 
 void NetworkValidator::TestMaxPool()
@@ -306,22 +379,6 @@ void NetworkValidator::TestMaxPool()
 	Number_Of_OUTPUT_Layers = 4;
 
 
-	/*for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
-	{
-		for (int i = 0; i < Input_LENGTH; i++)
-		{
-			Forward_Inputs[j][i] = rand() % range + min;
-		}
-	}
-
-	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
-	{
-		for (int i = 0; i < Input_LENGTH; i++)
-		{
-			Backprop_Inputs[j][i] = 6;
-		}
-	}*/
-
 	MaxPool testSubject2 = MaxPool(Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 
 	testSubject2.LayerForwardPass(Forward_Inputs);
@@ -341,19 +398,19 @@ void NetworkValidator::TestMaxPool()
 	/// </summary>
 
 
-	//for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
-	//{
-	//	delete[] Forward_Inputs[j];
-	//}
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		delete[] Forward_Inputs[j];
+	}
 
-	//for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
-	//{
-	//	delete[] Backprop_Inputs[j];
-	//}
+	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
+	{
+		delete[] Backprop_Inputs[j];
+	}
 
 
-	//delete[] Backprop_Inputs;
-	//delete[] Forward_Inputs;
+	delete[] Backprop_Inputs;
+	delete[] Forward_Inputs;
 
 
 
@@ -364,14 +421,14 @@ void NetworkValidator::TestMaxPool()
 	Number_Of_INPUT_Layers = 4;
 	Number_Of_OUTPUT_Layers = 4;
 
-	float** New_Forward_Inputs = new float* [Number_Of_INPUT_Layers];
+	Forward_Inputs= new float* [Number_Of_INPUT_Layers];
 
 	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
 	{
-		New_Forward_Inputs[j] = new float[Input_LENGTH];
+		Forward_Inputs[j] = new float[Input_LENGTH];
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			New_Forward_Inputs[j][i] = rand() % range + min;
+			Forward_Inputs[j][i] = rand() % range + min;
 		}
 	}
 
@@ -388,7 +445,7 @@ void NetworkValidator::TestMaxPool()
 
 	MaxPool testSubject3 = MaxPool(Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 
-	testSubject3.LayerForwardPass(New_Forward_Inputs);
+	testSubject3.LayerForwardPass(Forward_Inputs);
 	testSubject3.LayerBackwardPass(New_Backprop_Inputs);
 
 	cout << "========================================================================================================" << endl;
