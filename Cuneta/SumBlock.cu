@@ -38,28 +38,19 @@ using namespace std;
 __global__ void SumKernel(float* _input_1, float* _input_2, float* _output, int _inputWidth)
 {
 	//Starts from "top left" of current block of pixels being processed
-	int inputRowIndex = blockIdx.x * 2;
-	int inputColumnIndex = threadIdx.x * 2;
+	int inputRowIndex = blockIdx.x;
+	int inputColumnIndex = 0;
 
 
 	int inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
-
-
-	for (int row = 0; row < 2; row++)
-	{
-		inputColumnIndex = threadIdx.x * 2;
-		inputRowIndex += row;
-
-
-		for (int col = 0; col < 2; col++)
+	
+		for (int col = 0; col < _inputWidth; col++)
 		{
-			inputColumnIndex += col;
-
 			inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
 
 			_output[inputArrayIndex] = _input_1[inputArrayIndex] + _input_2[inputArrayIndex];
+			inputColumnIndex ++;
 		}
-	}
 }
 
 SumBlock::SumBlock(int _height, int _width, int _numberOfLayers, int _layerID, int _levelID)
