@@ -6,7 +6,8 @@
 #include <crt/host_defines.h>
 
 #include "CunetaModule.cuh"
-
+using namespace std;
+#include  <string>
 
 class Convolution : public CunetaModule
 {
@@ -72,6 +73,8 @@ public:
 	void Print();
 	void DebugPrintAll();
 	void PrintLayerParams();
+	void CudaErrHandler(string responsibleModule, string function);
+
 };
 
 #endif
