@@ -115,11 +115,17 @@ ErrorCalcModule::ErrorCalcModule(float* _inputMatrix, float* _groundTruth, int _
 
 void ErrorCalcModule::ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth)
 {
+
+}
+
+void ErrorCalcModule::LayerForwardPass()
+{
 	PixelWiseSigmoid();
 	PixelWiseCrossEntropy();
 	CrossEntropySum();
 	CalculateGradient();
 }
+
 
 void ErrorCalcModule::PixelWiseSigmoid()
 {
@@ -170,7 +176,7 @@ void ErrorCalcModule::PixelWiseCrossEntropy()
 
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
-	cudaMemcpy(d_SigmoidInput, sigmoidResultMatrix, byteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_SigmoidInput, m_InputMatrix, byteCount, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_GroundTruthMatrix, groundTruthMatrix, byteCount, cudaMemcpyHostToDevice);
 
 
@@ -276,30 +282,30 @@ void ErrorCalcModule::DebugPrintAll()
 	cout << "============ Error Calc Module Debug Print All ============" << endl;
 	cout << "===========================================================" << endl;
 
-	cout << "Squishy: " << endl;
-	cout << "Layer ID: " << layerID << endl;
-	cout << "Level ID: " << levelID << endl;
-	cout << "Network error: " << networkError << endl;
-
+	cout << "Error Calc: " << endl;
 
 	cout << ">>>> Input <<<<" << endl << endl;
-	
-	for (int i = 0; i < m_InputMatrixHeight*m_InputMatrixWidth; ++i)
+	newLineCounter = 1;
+
+	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
 	{
 		cout << m_InputMatrix[i] << " ";
-		if (newLineCounter == m_InputMatrixWidth+1)
+		newLineCounter++;
+		if (newLineCounter == m_InputMatrixWidth + 1)
 		{
 			cout << endl;
 			newLineCounter = 1;
 		}
 	}
 
-
+	cout << endl;
 	cout << ">>>> Ground truth <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
 	{
 		cout << groundTruthMatrix[i] << " ";
+		newLineCounter++;
 		if (newLineCounter == m_InputMatrixWidth + 1)
 		{
 			cout << endl;
@@ -307,12 +313,14 @@ void ErrorCalcModule::DebugPrintAll()
 		}
 	}
 
-
+	cout << endl;
 	cout << ">>>> Sigmoid Result <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
 	{
 		cout << sigmoidResultMatrix[i] << " ";
+		newLineCounter++;
 		if (newLineCounter == m_InputMatrixWidth + 1)
 		{
 			cout << endl;
@@ -320,11 +328,14 @@ void ErrorCalcModule::DebugPrintAll()
 		}
 	}
 
+	cout << endl;
 	cout << ">>>> Cross Entropy Result <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
 	{
 		cout << crossEntropyResultMatrix[i] << " ";
+		newLineCounter++;
 		if (newLineCounter == m_InputMatrixWidth + 1)
 		{
 			cout << endl;
@@ -332,23 +343,25 @@ void ErrorCalcModule::DebugPrintAll()
 		}
 	}
 
+	cout << endl;
 	cout << ">>>> Intermediate Sum Result <<<<" << endl << endl;
 
-	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
+	for (int i = 0; i < m_InputMatrixHeight; ++i)
 	{
-		cout << intermediateSumResult[i] << " ";
-		if (newLineCounter == m_InputMatrixWidth + 1)
-		{
-			cout << endl;
-			newLineCounter = 1;
-		}
+		cout << intermediateSumResult[i] << endl;
 	}
 
+	cout << endl;
+	cout << "Total Sum (Network error): " << networkError << endl;
+
+	cout << endl;
 	cout << ">>>> dXdL Result <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int i = 0; i < m_InputMatrixHeight * m_InputMatrixWidth; ++i)
 	{
 		cout << dLdXMatrix[i] << " ";
+		newLineCounter++;
 		if (newLineCounter == m_InputMatrixWidth + 1)
 		{
 			cout << endl;
@@ -356,6 +369,8 @@ void ErrorCalcModule::DebugPrintAll()
 		}
 	}
 
+	cout << endl;
+	cout << endl;
 }
 
 
