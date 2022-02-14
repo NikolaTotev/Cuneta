@@ -173,6 +173,8 @@ int main()
 		mode = "Test";
 
 		cout << "Good idea, it's important to test things!" << endl;
+		cout << endl;
+
 		/*cout << "Where would you like to save the test results?" << endl;
 		cin.ignore();
 		getline(cin, saveDir);
@@ -181,6 +183,7 @@ int main()
 		//cout << "Fantastic! Preparing test mode for you!" << endl;
 		cout << "Preparing test mode for you!" << endl;
 		cout << "Enjoy and good luck! May all of the tests pass! <3" << endl;
+		cout << endl;
 		NetworkValidator mrValidator = NetworkValidator(saveDir);
 		mrValidator.TestFlowController();
 
