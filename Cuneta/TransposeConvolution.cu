@@ -411,7 +411,8 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize, in
 		memset(L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], 0, biasByteCount);
 	}
 
-	InitializeFilter();
+	LayerFilterInitialization();
+	
 }
 
 
@@ -1383,6 +1384,26 @@ void TransposeConvolution::LayerFilterInitialization()
 	}
 }
 
+void TransposeConvolution::LayerBiasInitialization()
+{
+	std::random_device rd{};
+	std::mt19937 gen{ rd() };
+	std::normal_distribution<> distribution{ 0,1 };
+
+	int biasElementCount = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+
+	for (int biasNumber = 0; biasNumber < L_NumberOf_FILTERS; ++biasNumber)
+	{
+		L_Biases[biasNumber] = new float[biasElementCount];
+
+		for (int i = 0; i < biasElementCount; ++i)
+		{
+			L_Biases[biasNumber][i] = 1; //distribution(gen);
+		}
+	}
+}
+
+
 void TransposeConvolution::FlipFilter()
 {
 	int filterArraySize = m_FilterSize * m_FilterSize;
@@ -1394,6 +1415,15 @@ void TransposeConvolution::FlipFilter()
 	for (int i = filterArraySize - 1; i >= 0; ) {
 		m_FlippedFilter[k++] = m_Filter[i--];
 	}
+}
+
+void TransposeConvolution::SetHyperParams(float _beta1, float _beta2, float _eps, int _t, float _alpha)
+{
+	m_HyperParam_Beta1 = _beta1;
+	m_HyperParam_Beta2 = _beta2;
+	m_HyperParam_Epsilon = _eps;
+	m_HyperParam_T = _t;
+	m_HyperParam_alpha = _alpha;
 }
 
 void TransposeConvolution::DebugPrintAll()

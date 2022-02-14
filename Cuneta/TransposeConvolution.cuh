@@ -67,6 +67,8 @@ public:
 	void LayerFilterBackprop();
 	void LayerBiasUpdate();
 	void LayerFilterInitialization();
+	void LayerBiasInitialization();
+
 	void LayerFlipFilter();
 	void LayerPadInput();
 	void LayerUpdate();
