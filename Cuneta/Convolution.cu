@@ -306,13 +306,14 @@ __global__ void FilterUpdateKernel(float** _currentFilters, float** _filterGradi
 
 __global__ void BiasUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _height, int _width, float _HyperParam_Beta1, float _HyperParam_Beta2, float _HyperParam_T, float _HyperParam_alpha, float _HyperParam_Epsilon)
 {
-	float* selectedFilter = _currentFilters[blockIdx.x];
+	int filterSelectionIndex = blockIdx.x * blockDim.x + threadIdx.x;
+	float* selectedFilter = _currentFilters[filterSelectionIndex];
 	float* selectedGradient = _filterGradients[blockIdx.x];
-	float* selected_V_Matrix = _VMatricies[blockIdx.x];
-	float* selected_S_Matrix = _SMatricies[blockIdx.x];
-	float* selected_Corrected_V_Matrix = _V_CorrectedMatrices[blockIdx.x];
-	float* selected_Corrected_S_Matrix = _S_CorrectedMatricies[blockIdx.x];
-
+	float* selected_V_Matrix = _VMatricies[filterSelectionIndex];
+	float* selected_S_Matrix = _SMatricies[filterSelectionIndex];
+	float* selected_Corrected_V_Matrix = _V_CorrectedMatrices[filterSelectionIndex];
+	float* selected_Corrected_S_Matrix = _S_CorrectedMatricies[filterSelectionIndex];
+	
 	for (int rowIndex = 0; rowIndex < _height; ++rowIndex)
 	{
 		for (int columnIndex = 0; columnIndex < _width; ++columnIndex)
@@ -1188,8 +1189,8 @@ void Convolution::LayerBiasUpdate()
 	size_t biasMatrixByteCount = biasMatrixSize * sizeof(float);
 
 
-	int numberOfBlocks_X = L_NumberOf_FILTERS;
-	int numberOfThreadsPerBlock = 1;
+	int numberOfBlocks_X = L_BACKWARD_NumberOf_INPUTS;
+	int numberOfThreadsPerBlock = L_BACKWARD_NumberOf_OUTPUTS;
 
 	// create intermediate host array for storage of device row-pointers
 
@@ -1220,13 +1221,18 @@ void Convolution::LayerBiasUpdate()
 	float** d_S_CORRECTED_Matricies;
 	cudaMalloc((void**)&d_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(int*));
 
+	for (int i = 0; i < L_BACKWARD_NumberOf_INPUTS; ++i)
+	{
+		cudaMalloc(&h_BiasGradients[i], biasMatrixByteCount);
+		cudaMemcpy(h_BiasGradients[i], L_BACKWARD_Pass_INPUTS[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+	}
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 		cudaMalloc(&h_Biases[i], biasMatrixByteCount);
 		cudaMemcpy(h_Biases[i], L_Biases[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
 
-		cudaMalloc(&h_BiasGradients[i], biasMatrixByteCount);
-		cudaMemcpy(h_BiasGradients[i], L_BACKWARD_Pass_INPUTS[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
+		L_PrevBiases[i] = new float[biasMatrixSize];
+		memcpy(L_PrevBiases[i], L_Biases[i], biasMatrixByteCount);
 
 		cudaMalloc(&h_V_Matricies[i], biasMatrixByteCount);
 		cudaMemcpy(h_V_Matricies[i], L_BIAS_AdamOptimizer_V_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
@@ -1320,7 +1326,7 @@ void Convolution::InitializeFilter()
 
 	for (int i = 0; i < m_FilterSize * m_FilterSize; ++i)
 	{
-		m_Filter[i] = distribution(gen);  //TODO FIX INITIALIZATION
+		m_Filter[i] = i + 1;// distribution(gen);  //TODO FIX INITIALIZATION
 	}
 }
 
