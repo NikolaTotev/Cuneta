@@ -176,7 +176,7 @@ void ErrorCalcModule::PixelWiseCrossEntropy()
 
 
 	//Copy memory into global device memory m_InputMatrix -> d_Input
-	cudaMemcpy(d_SigmoidInput, m_InputMatrix, byteCount, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_SigmoidInput, sigmoidResultMatrix, byteCount, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_GroundTruthMatrix, groundTruthMatrix, byteCount, cudaMemcpyHostToDevice);
 
 
@@ -368,7 +368,6 @@ void ErrorCalcModule::DebugPrintAll()
 			newLineCounter = 1;
 		}
 	}
-
 	cout << endl;
 	cout << endl;
 }
