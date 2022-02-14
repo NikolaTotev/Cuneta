@@ -505,7 +505,7 @@ void NetworkValidator::TestConvolution()
 	cout << "================================================================================================================================" << endl;
 	cout << endl;
 
-	testSubject.DebugPrintAll();
+	//testSubject.DebugPrintAll();
 
 	/// <summary>
 	/// SWAP WIDTH AND HEIGHT DIMENSIONS
@@ -528,7 +528,7 @@ void NetworkValidator::TestConvolution()
 	cout << "================================================================================================================================" << endl;
 	cout << endl;
 
-	testSubject2.DebugPrintAll();
+	//testSubject2.DebugPrintAll();
 }
 
 void NetworkValidator::TestErrorBlock()
