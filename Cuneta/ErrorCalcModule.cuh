@@ -20,6 +20,7 @@ public:
 	float* dLdXMatrix;
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
+	void LayerForwardPass();
 	void UpdateModule() override;
 	void PixelWiseSigmoid();
 	void PixelWiseCrossEntropy();
