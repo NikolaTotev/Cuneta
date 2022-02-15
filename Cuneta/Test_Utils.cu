@@ -695,9 +695,9 @@ void NetworkValidator::TestTransposeConvolution()
 
 	testSubject.DebugPrintAll();
 
-	/// <summary>
-	/// SWAP WIDTH AND HEIGHT DIMENSIONS
-	/// </summary>
+	 ///<summary>
+	 ///SWAP WIDTH AND HEIGHT DIMENSIONS
+	 ///</summary>
 
 	Input_HEIGHT = 4;
 	Input_WIDTH = 6;
