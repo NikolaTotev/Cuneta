@@ -87,7 +87,7 @@ __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput,
 	int fwdInputArrayIndex = fwdInputRowIndex * _fwdInputWidth + fwdInputColumnIndex; ///OK
 
 	float currentMax = d_FwdInput[fwdInputArrayIndex]; ///OK
-	float currentPixel = 22; ///OK
+	float currentPixel = d_FwdInput[fwdInputArrayIndex]; ///OK
 	int maxElementIndex = fwdInputArrayIndex; ///OK
 
 	for (int row = 0; row < 2; row++)
