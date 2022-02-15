@@ -344,8 +344,16 @@ __global__ void BiasUpdateKernel(float** _currentFilters, float** _filterGradien
 	}
 }
 
-Convolution::Convolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth)
+Convolution::Convolution()
 {
+	
+}
+
+
+Convolution::Convolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID)
+{
+	layerID = _layerID;
+	levelID = _levelID;
 	m_FilterSize = _filterSize;
 	m_PaddingSize = _paddingSize;
 	m_AdamOptimizer_VMatrix = new float[m_FilterSize * m_FilterSize];
@@ -1507,6 +1515,33 @@ void Convolution::CudaErrHandler(string responsibleModule, string function)
 	}*/
 }
 
+void Convolution::PrintLayerParams()
+{
+	cout << "==========================================" << endl;
+	cout << "====== Convolution Layer Parameters ======" << endl;
+	cout << "==========================================" << endl;
+	cout << "Convolution: Layer " << layerID << " " << "Level " << levelID << endl;
+
+	cout << endl;
+
+	cout << "-- Forward Dimensions --" << endl;
+	cout << "Forward Input Height: " << L_FORWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_FORWARD_OutputLayer_HEIGHT << endl;
+	cout << "Forward Input Width: " << L_FORWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_FORWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Backward Dimensions --" << endl;
+	cout << "Backward Input Height: " << L_BACKWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_BACKWARD_OutputLayer_HEIGHT << endl;
+	cout << "Backward Input Width: " << L_BACKWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_BACKWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Feature map count --" << endl;
+	cout << "Forward Input Count: " << L_FORWARD_NumberOf_INPUTS << " || Backward Input Count: " << L_BACKWARD_NumberOf_INPUTS << endl;
+	cout << "Forward Output Count: " << L_FORWARD_NumberOf_OUTPUTS << " || Backward Output Count: " << L_BACKWARD_NumberOf_OUTPUTS << endl;
+
+	cout << "===================================" << endl;
+}
 
 void Convolution::DebugPrintAll()
 {
