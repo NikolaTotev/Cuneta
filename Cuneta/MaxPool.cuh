@@ -12,6 +12,7 @@ class MaxPool : public CunetaModule
 {
 public:
 	MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID);
+	MaxPool();
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 	void LayerForwardPass(float** _inputs) override;
