@@ -12,6 +12,7 @@ class Squishy : public CunetaModule
 {
 public:
 	Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID);
+	Squishy();
 	float* m_Filter;
 	float* m_FlippedFilter;
 	float* m_PaddedBackpropInput;
