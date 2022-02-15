@@ -43,15 +43,17 @@ __global__ void SumKernel(float* _input_1, float* _input_2, float* _output, int 
 
 
 	int inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
-	
-		for (int col = 0; col < _inputWidth; col++)
-		{
-			inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
 
-			_output[inputArrayIndex] = _input_1[inputArrayIndex] + _input_2[inputArrayIndex];
-			inputColumnIndex ++;
-		}
+	for (int col = 0; col < _inputWidth; col++)
+	{
+		inputArrayIndex = inputRowIndex * _inputWidth + inputColumnIndex;
+
+		_output[inputArrayIndex] = _input_1[inputArrayIndex] + _input_2[inputArrayIndex];
+		inputColumnIndex++;
+	}
 }
+
+SumBlock::SumBlock(){}
 
 SumBlock::SumBlock(int _height, int _width, int _numberOfLayers, int _layerID, int _levelID)
 {
@@ -116,6 +118,25 @@ void SumBlock::Sum(float** _inputSet_1, float** _inputSet_2)
 	}
 }
 
+
+void SumBlock::PrintLayerParams()
+{
+	cout << "====================================================" << endl;
+	cout << "====== Squishy Convolution Layer Parameters ======" << endl;
+	cout << "====================================================" << endl;
+	cout << "Squishy: Layer " << layerID << " " << "Level " << levelID << endl;
+
+	cout << endl;
+
+	cout << "-- Dimensions --" << endl;
+	cout << "Input Height: " << Height << " || Input Width: " << Width << endl;
+
+	cout << "Number of elements per set: " << NumberOfLayers << endl;
+	cout << endl;
+
+	cout << "===================================" << endl;
+}
+
 void SumBlock::DebugPrintAll()
 {
 	int newLineCounter = 1;
@@ -127,15 +148,15 @@ void SumBlock::DebugPrintAll()
 	cout << "Sum Block: " << endl;
 	cout << "Layer ID: " << layerID << endl;
 	cout << "Level ID: " << levelID << endl;
-	cout << "Number of layers: "<< NumberOfLayers << endl;
-	
+	cout << "Number of layers: " << NumberOfLayers << endl;
+
 
 	cout << ">>>> Input Set 1 <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < NumberOfLayers; ++inputIndex)
 	{
 		cout << "--- Element " << inputIndex + 1 << "---" << endl;
-		for (int elementIndex = 0; elementIndex < Height*Width; ++elementIndex)
+		for (int elementIndex = 0; elementIndex < Height * Width; ++elementIndex)
 		{
 			cout << InputSet_1[inputIndex][elementIndex] << " ";
 			newLineCounter++;
