@@ -79,7 +79,10 @@ class Cuneta
 	Convolution Convolution_Level_9_Layer_2;
 	ReLU ReLU_Level_9_Layer_2;
 
-
+	int Input_HEIGHT;
+	int Input_WIDTH;
+	float** Input;
+	Cuneta(int _height, int _width, float** _input);
 	void Train(string dataDirectory, string logDirectory);
 	void Segment(string inputImage, string logDirectory);
 	void Save(string savePath);
