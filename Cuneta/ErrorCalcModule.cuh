@@ -12,6 +12,7 @@ class ErrorCalcModule : public CunetaModule
 {
 public:
 	ErrorCalcModule(float* _inputMatrix, float*_groundTruth,int _inputHeight, int _inputWidth);
+	ErrorCalcModule();
 	float networkError;
 	float* groundTruthMatrix;
 	float* sigmoidResultMatrix;
