@@ -19,8 +19,10 @@ public:
 	int levelID;
 
 	SumBlock(int _height, int _width, int _numberOfLayers, int _layerID, int _levelID);
+	SumBlock();
 	void Sum(float** _inputSet_1, float** _inputSet_2);
-	void DebugPrintAll(); 
+	void DebugPrintAll();
+	void PrintLayerParams();
 };
 
 
