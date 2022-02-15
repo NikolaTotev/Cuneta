@@ -498,7 +498,7 @@ void NetworkValidator::TestConvolution()
 		}
 	}
 
-	Convolution testSubject = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	Convolution testSubject = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH,0,0);
 	testSubject.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
 	testSubject.LayerForwardPass(Forward_Inputs);
 	testSubject.LayerBackwardPass(Backprop_Inputs);
@@ -521,7 +521,7 @@ void NetworkValidator::TestConvolution()
 	Number_Of_OUTPUT_Layers = 2;
 
 
-	Convolution testSubject2 = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	Convolution testSubject2 = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 	testSubject2.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
 	testSubject2.LayerForwardPass(Forward_Inputs);
 	testSubject2.LayerBackwardPass(Backprop_Inputs);
@@ -561,7 +561,7 @@ void NetworkValidator::TestConvolution()
 		}
 	}
 
-	Convolution testSubject3 = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	Convolution testSubject3 = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 	testSubject3.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
 	testSubject3.LayerForwardPass(Forward_Inputs);
 	testSubject3.LayerBackwardPass(Backprop_Inputs);
@@ -690,11 +690,11 @@ void NetworkValidator::TestTransposeConvolution()
 {
 	int Input_HEIGHT = 6;
 	int Input_WIDTH = 4;
-	int Output_HEIGHT = Input_HEIGHT+2;
-	int Output_WIDTH = Input_WIDTH+2;
+	int Output_HEIGHT = Input_HEIGHT*2;
+	int Output_WIDTH = Input_WIDTH*2;
 	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
 	int Output_LENGTH = Output_HEIGHT * Output_WIDTH;
-	int Number_Of_INPUT_Layers = 4;
+	int Number_Of_INPUT_Layers = 2;
 	int Number_Of_OUTPUT_Layers = 4;
 	int Filter_Size = 3;
 	int Padding = 2;
@@ -729,7 +729,7 @@ void NetworkValidator::TestTransposeConvolution()
 		}
 	}
 
-	TransposeConvolution testSubject = TransposeConvolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	TransposeConvolution testSubject = TransposeConvolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH, 0, 0);
 	testSubject.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
 	testSubject.LayerForwardPass(Forward_Inputs);
 	testSubject.LayerBackwardPass(Backprop_Inputs);
@@ -740,75 +740,6 @@ void NetworkValidator::TestTransposeConvolution()
 	cout << endl;
 
 	testSubject.DebugPrintAll();
-
-	 ///<summary>
-	 ///SWAP WIDTH AND HEIGHT DIMENSIONS
-	 ///</summary>
-
-	Input_HEIGHT = 4;
-	Input_WIDTH = 6;
-	Output_HEIGHT = Input_HEIGHT + 2;
-	Output_WIDTH = Input_WIDTH + 2;
-	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
-	Number_Of_INPUT_Layers = 2;
-	Number_Of_OUTPUT_Layers = 4;
-
-
-	TransposeConvolution testSubject2 = TransposeConvolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
-	testSubject2.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
-	testSubject2.LayerForwardPass(Forward_Inputs);
-	testSubject2.LayerBackwardPass(Backprop_Inputs);
-
-	cout << "================================================================================================================================" << endl;
-	cout << "====================================================== CONVOLUTION TEST 2 ======================================================" << endl;
-	cout << "================================================================================================================================" << endl;
-	cout << endl;
-
-	testSubject2.DebugPrintAll();
-
-	Input_HEIGHT = 4;
-	Input_WIDTH = 6;
-	Output_HEIGHT = Input_HEIGHT + 2;
-	Output_WIDTH = Input_WIDTH + 2;
-	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
-	Number_Of_INPUT_Layers = 4;
-	Number_Of_OUTPUT_Layers = 4;
-
-	Forward_Inputs = new float* [Number_Of_INPUT_Layers];
-	Backprop_Inputs = new float* [Number_Of_OUTPUT_Layers];
-
-
-	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
-	{
-		Forward_Inputs[j] = new float[Input_LENGTH];
-
-		for (int i = 0; i < Input_LENGTH; i++)
-		{
-			Forward_Inputs[j][i] = 1;
-		}
-	}
-
-	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
-	{
-		Backprop_Inputs[j] = new float[Output_LENGTH];
-
-		for (int i = 0; i < Output_LENGTH; i++)
-		{
-			Backprop_Inputs[j][i] = 2;
-		}
-	}
-
-	TransposeConvolution testSubject3 = TransposeConvolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
-	testSubject3.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
-	testSubject3.LayerForwardPass(Forward_Inputs);
-	testSubject3.LayerBackwardPass(Backprop_Inputs);
-
-	cout << "================================================================================================================================" << endl;
-	cout << "====================================================== CONVOLUTION TEST 2 ======================================================" << endl;
-	cout << "================================================================================================================================" << endl;
-	cout << endl;
-
-	testSubject3.DebugPrintAll();
 }
 
 
