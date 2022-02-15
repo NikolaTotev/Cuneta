@@ -254,6 +254,9 @@ __global__ void SquishyBiasUpdateKernel(float** _currentBiasies, float** _biasGr
 	}
 }
 
+Squishy::Squishy(){}
+
+
 Squishy::Squishy(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID)
 {
 	m_FilterSize = _filterSize;
@@ -1114,6 +1117,33 @@ void Squishy::SetHyperParams(float _beta1, float _beta2, float _eps, int _t, flo
 	m_HyperParam_alpha = _alpha;
 }
 
+void Squishy::PrintLayerParams()
+{
+	cout << "====================================================" << endl;
+	cout << "====== Squishy Convolution Layer Parameters ======" << endl;
+	cout << "====================================================" << endl;
+	cout << "Squishy: Layer " << layerID << " " << "Level " << levelID << endl;
+
+	cout << endl;
+
+	cout << "-- Forward Dimensions --" << endl;
+	cout << "Forward Input Height: " << L_FORWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_FORWARD_OutputLayer_HEIGHT << endl;
+	cout << "Forward Input Width: " << L_FORWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_FORWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Backward Dimensions --" << endl;
+	cout << "Backward Input Height: " << L_BACKWARD_InputLayer_HEIGHT << " || Forward Output Height: " << L_BACKWARD_OutputLayer_HEIGHT << endl;
+	cout << "Backward Input Width: " << L_BACKWARD_InputLayer_WIDTH << " || Forward Output Width: " << L_BACKWARD_OutputLayer_WIDTH << endl;
+
+	cout << endl;
+
+	cout << "-- Feature map count --" << endl;
+	cout << "Forward Input Count: " << L_FORWARD_NumberOf_INPUTS << " || Backward Input Count: " << L_BACKWARD_NumberOf_INPUTS << endl;
+	cout << "Forward Output Count: " << L_FORWARD_NumberOf_OUTPUTS << " || Backward Output Count: " << L_BACKWARD_NumberOf_OUTPUTS << endl;
+
+	cout << "===================================" << endl;
+}
 
 void Squishy::DebugPrintAll()
 {
