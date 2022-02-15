@@ -311,10 +311,6 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 	output << transposeConvolutionToSave.m_BackpropInputMatrixHeight << endl;
 	output << transposeConvolutionToSave.m_BackpropInputMatrixWidth << endl;
 
-	output << endl;
-	output << "m_PaddedInputDims" << endl;
-	output << transposeConvolutionToSave.m_PaddedInputHeight << endl;
-	output << transposeConvolutionToSave.m_PaddedInputWidth << endl;
 
 	output << endl;
 	output << "m_BackpropOutputDims" << endl;
@@ -326,15 +322,6 @@ void CunetaLogger::LogTransposeConvolutionState(TransposeConvolution transposeCo
 	for (int i = 0; i < transposeConvolutionToSave.m_InputMatrixHeight * transposeConvolutionToSave.m_InputMatrixWidth; ++i)
 	{
 		output << transposeConvolutionToSave.m_InputMatrix[i] << " ";
-	}
-
-	output << endl;
-	output << endl;
-	output << "m_PaddedInput" << endl;
-
-	for (int i = 0; i < transposeConvolutionToSave.m_PaddedInputHeight * transposeConvolutionToSave.m_PaddedInputWidth; ++i)
-	{
-		output << transposeConvolutionToSave.m_PaddedInput[i] << " ";
 	}
 
 	output << endl;
