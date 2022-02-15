@@ -56,6 +56,11 @@ __global__ void BackpropReLUKernel(float* d_BackpropInput, float* d_FwdInput, fl
 
 }
 
+ReLU::ReLU()
+{
+	
+}
+
 ReLU::ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth, int _layerID, int _levelID)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
