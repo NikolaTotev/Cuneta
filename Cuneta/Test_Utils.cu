@@ -269,7 +269,7 @@ void NetworkValidator::SquishTest()
 
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			Forward_Inputs[j][i] = j + 1;
+			Forward_Inputs[j][i] = 1;
 		}
 	}
 
@@ -481,7 +481,7 @@ void NetworkValidator::TestConvolution()
 
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			Forward_Inputs[j][i] = j + 1;
+			Forward_Inputs[j][i] = 1;
 		}
 	}
 
@@ -505,7 +505,7 @@ void NetworkValidator::TestConvolution()
 	cout << "================================================================================================================================" << endl;
 	cout << endl;
 
-	//testSubject.DebugPrintAll();
+	testSubject.DebugPrintAll();
 
 	/// <summary>
 	/// SWAP WIDTH AND HEIGHT DIMENSIONS
@@ -528,7 +528,7 @@ void NetworkValidator::TestConvolution()
 	cout << "================================================================================================================================" << endl;
 	cout << endl;
 
-	//testSubject2.DebugPrintAll();
+	testSubject2.DebugPrintAll();
 }
 
 void NetworkValidator::TestErrorBlock()
@@ -669,7 +669,7 @@ void NetworkValidator::TestTransposeConvolution()
 
 		for (int i = 0; i < Input_LENGTH; i++)
 		{
-			Forward_Inputs[j][i] = j + 1;
+			Forward_Inputs[j][i] = 1;
 		}
 	}
 
