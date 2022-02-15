@@ -12,7 +12,8 @@ using namespace std;
 class Convolution : public CunetaModule
 {
 public:
-	Convolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth);
+	Convolution(int _filterSize, int _paddingSize, int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID);
+	Convolution();
 	float* m_Filter;
 	float* m_FlippedFilter;
 	float* m_PaddedBackpropInput;
