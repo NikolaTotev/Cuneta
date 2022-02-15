@@ -99,6 +99,10 @@ __global__ void CrossEntropySumKernel(float* d_Input, float* d_Output, int matri
 
 };
 
+ErrorCalcModule::ErrorCalcModule()
+{
+	
+}
 
 ErrorCalcModule::ErrorCalcModule(float* _inputMatrix, float* _groundTruth, int _inputHeight, int _inputWidth)
 {
