@@ -459,7 +459,10 @@ void NetworkValidator::TestConvolution()
 {
 	int Input_HEIGHT = 8;
 	int Input_WIDTH = 4;
+	int Output_HEIGHT = Input_HEIGHT - 2;
+	int Output_WIDTH = Input_WIDTH - 2;
 	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	int Output_LENGTH = Output_HEIGHT * Output_WIDTH;
 	int Number_Of_INPUT_Layers = 4;
 	int Number_Of_OUTPUT_Layers = 2;
 	int Filter_Size = 3;
@@ -487,9 +490,9 @@ void NetworkValidator::TestConvolution()
 
 	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
 	{
-		Backprop_Inputs[j] = new float[Input_LENGTH];
+		Backprop_Inputs[j] = new float[Output_LENGTH];
 
-		for (int i = 0; i < Input_LENGTH; i++)
+		for (int i = 0; i < Output_LENGTH; i++)
 		{
 			Backprop_Inputs[j][i] = 2;
 		}
@@ -529,6 +532,46 @@ void NetworkValidator::TestConvolution()
 	cout << endl;
 
 	testSubject2.DebugPrintAll();
+
+
+	Input_HEIGHT = 4;
+	Input_WIDTH = 8;
+	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	Number_Of_INPUT_Layers = 2;
+	Number_Of_OUTPUT_Layers = 4;
+
+
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		Forward_Inputs[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			Forward_Inputs[j][i] = 1;
+		}
+	}
+
+	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
+	{
+		Backprop_Inputs[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			Backprop_Inputs[j][i] = 2;
+		}
+	}
+
+	Convolution testSubject3 = Convolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	testSubject3.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
+	testSubject3.LayerForwardPass(Forward_Inputs);
+	testSubject3.LayerBackwardPass(Backprop_Inputs);
+
+	cout << "================================================================================================================================" << endl;
+	cout << "====================================================== CONVOLUTION TEST 3 ======================================================" << endl;
+	cout << "================================================================================================================================" << endl;
+	cout << endl;
+	testSubject3.DebugPrintAll();
+
 }
 
 void NetworkValidator::TestErrorBlock()
@@ -647,8 +690,11 @@ void NetworkValidator::TestTransposeConvolution()
 {
 	int Input_HEIGHT = 6;
 	int Input_WIDTH = 4;
+	int Output_HEIGHT = Input_HEIGHT+2;
+	int Output_WIDTH = Input_WIDTH+2;
 	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
-	int Number_Of_INPUT_Layers = 2;
+	int Output_LENGTH = Output_HEIGHT * Output_WIDTH;
+	int Number_Of_INPUT_Layers = 4;
 	int Number_Of_OUTPUT_Layers = 4;
 	int Filter_Size = 3;
 	int Padding = 2;
@@ -675,9 +721,9 @@ void NetworkValidator::TestTransposeConvolution()
 
 	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
 	{
-		Backprop_Inputs[j] = new float[Input_LENGTH];
+		Backprop_Inputs[j] = new float[Output_LENGTH];
 
-		for (int i = 0; i < Input_LENGTH; i++)
+		for (int i = 0; i < Output_LENGTH; i++)
 		{
 			Backprop_Inputs[j][i] = 2;
 		}
@@ -701,6 +747,8 @@ void NetworkValidator::TestTransposeConvolution()
 
 	Input_HEIGHT = 4;
 	Input_WIDTH = 6;
+	Output_HEIGHT = Input_HEIGHT + 2;
+	Output_WIDTH = Input_WIDTH + 2;
 	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
 	Number_Of_INPUT_Layers = 2;
 	Number_Of_OUTPUT_Layers = 4;
@@ -717,6 +765,50 @@ void NetworkValidator::TestTransposeConvolution()
 	cout << endl;
 
 	testSubject2.DebugPrintAll();
+
+	Input_HEIGHT = 4;
+	Input_WIDTH = 6;
+	Output_HEIGHT = Input_HEIGHT + 2;
+	Output_WIDTH = Input_WIDTH + 2;
+	Input_LENGTH = Input_HEIGHT * Input_WIDTH;
+	Number_Of_INPUT_Layers = 4;
+	Number_Of_OUTPUT_Layers = 4;
+
+	Forward_Inputs = new float* [Number_Of_INPUT_Layers];
+	Backprop_Inputs = new float* [Number_Of_OUTPUT_Layers];
+
+
+	for (int j = 0; j < Number_Of_INPUT_Layers; ++j)
+	{
+		Forward_Inputs[j] = new float[Input_LENGTH];
+
+		for (int i = 0; i < Input_LENGTH; i++)
+		{
+			Forward_Inputs[j][i] = 1;
+		}
+	}
+
+	for (int j = 0; j < Number_Of_OUTPUT_Layers; ++j)
+	{
+		Backprop_Inputs[j] = new float[Output_LENGTH];
+
+		for (int i = 0; i < Output_LENGTH; i++)
+		{
+			Backprop_Inputs[j][i] = 2;
+		}
+	}
+
+	TransposeConvolution testSubject3 = TransposeConvolution(Filter_Size, Padding, Number_Of_INPUT_Layers, Number_Of_OUTPUT_Layers, Input_HEIGHT, Input_WIDTH);
+	testSubject3.SetHyperParams(HyperParam_Beta1, HyperParam_Beta2, HyperParam_Eps, HyperParam_T, HyperParam_Alpha);
+	testSubject3.LayerForwardPass(Forward_Inputs);
+	testSubject3.LayerBackwardPass(Backprop_Inputs);
+
+	cout << "================================================================================================================================" << endl;
+	cout << "====================================================== CONVOLUTION TEST 2 ======================================================" << endl;
+	cout << "================================================================================================================================" << endl;
+	cout << endl;
+
+	testSubject3.DebugPrintAll();
 }
 
 
