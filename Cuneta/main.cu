@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "Convolution.cuh"
+#include "Cuneta.cuh"
 #include "Squishy.cuh"
 #include "FolderManager.cuh"
 #include "ImageIngester.cuh"
@@ -28,7 +29,9 @@ int main()
 	bool enableVerboseOutput;
 	bool trainingInputCompleted;
 	string mode;
-	
+	int size = 252 * 156;
+	float** temporary = new float*[size];
+	//Cuneta Cu = Cuneta(252, 156, temporary);
 	cout << "Cuneta is starting..." << endl;
 	cout << "Welcome, what would you like to start with?" << endl;
 
@@ -197,6 +200,11 @@ int main()
 
 		cout << "That's all for now! See you later :3" << endl;
 		
+	}
+
+	if(userInput == "ShowConfig")
+	{
+		//Cu.PrintSetup();
 	}
 
 	if(mode == "Train")
