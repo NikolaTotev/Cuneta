@@ -388,7 +388,6 @@ Convolution::Convolution(int _filterSize, int _paddingSize, int _numberOfInputs,
 	L_FLIPPED_Filters = new float* [L_NumberOf_FILTERS];
 	L_Filter_BACKPROP_RESULTS = new float* [L_NumberOf_FILTERS];
 
-	L_Baises = new float* [L_NumberOf_FILTERS];
 	L_PrevBiases = new float* [L_NumberOf_FILTERS];
 
 
@@ -408,14 +407,13 @@ Convolution::Convolution(int _filterSize, int _paddingSize, int _numberOfInputs,
 		L_AdamOptimizer_S_Matrix[i] = new float[m_FilterSize * m_FilterSize];
 		L_AdamOptimizer_Corrected_V_Matrix[i] = new float[m_FilterSize * m_FilterSize];
 		L_AdamOptimizer_Corrected_S_Matrix[i] = new float[m_FilterSize * m_FilterSize];
-		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
+
 		size_t byteCount = m_FilterSize * m_FilterSize * sizeof(float);
 		memset(L_AdamOptimizer_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_S_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_S_Matrix[i], 0, byteCount);
 
-		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_Corrected_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
@@ -1358,7 +1356,7 @@ void Convolution::LayerBiasInitialization()
 	std::random_device rd{};
 	std::mt19937 gen{ rd() };
 	std::normal_distribution<> distribution{ 0,1 };
-
+	L_Biases = new float* [L_NumberOf_FILTERS];
 	int biasElementCount = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
 	for (int biasNumber = 0; biasNumber < L_NumberOf_FILTERS; ++biasNumber)
@@ -1530,6 +1528,7 @@ void Convolution::DebugPrintAll()
 
 
 	cout << ">>>> Forward Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_INPUTS; ++inputIndex)
 	{
@@ -1548,6 +1547,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Normal Filter Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1567,6 +1567,7 @@ void Convolution::DebugPrintAll()
 
 
 	cout << ">>>> Flipped Filter Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1586,6 +1587,7 @@ void Convolution::DebugPrintAll()
 
 
 	cout << ">>>> Forward Outputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
@@ -1604,6 +1606,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Backward Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
 	{
@@ -1622,6 +1625,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Padded Backward Inputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
 	{
@@ -1640,6 +1644,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Backward Outputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_OUTPUTS; ++inputIndex)
 	{
@@ -1658,6 +1663,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Filter Backprop Outputs <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1676,6 +1682,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Bias Outputs Before Update <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1684,7 +1691,7 @@ void Convolution::DebugPrintAll()
 		{
 			cout << L_PrevBiases[inputIndex][elementIndex] << " ";
 			newLineCounter++;
-			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
@@ -1695,6 +1702,7 @@ void Convolution::DebugPrintAll()
 
 
 	cout << ">>>> Bias Outputs After Update <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1713,6 +1721,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Filter Adam Optimizer V Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1731,6 +1740,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Filter Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1749,6 +1759,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Filter Adam Optimizer S Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1767,6 +1778,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> Filter Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1785,6 +1797,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> BIAS Adam Optimizer V Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1803,6 +1816,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> BIAS Adam Optimizer >CORRECTED< V Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1821,6 +1835,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> BIAS Adam Optimizer S Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1839,6 +1854,7 @@ void Convolution::DebugPrintAll()
 	}
 
 	cout << ">>>> BIAS Adam Optimizer >CORRECTED< S Matrix <<<<" << endl << endl;
+	newLineCounter = 1;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
