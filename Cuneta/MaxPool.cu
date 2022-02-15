@@ -120,6 +120,11 @@ __global__ void BackpropMaxPoolKernel(float* d_BackpropInput, float* d_FwdInput,
 
 };
 
+MaxPool::MaxPool()
+{
+	
+}
+
 MaxPool::MaxPool(int _numberOfInputs, int _numberOfOutputs, int _inputHeight, int _inputWidth, int _layerID, int _levelID)
 {
 	L_FORWARD_NumberOf_INPUTS = _numberOfInputs;
@@ -351,9 +356,9 @@ void MaxPool::LayerBackwardPass(float** _backpropInput)
 void MaxPool::PrintLayerParams()
 {
 	cout << "===================================" << endl;
-	cout << "====== ReLU Layer Parameters ======" << endl;
+	cout << "====== Max Pool Layer Parameters ======" << endl;
 	cout << "===================================" << endl;
-	cout << "ReLU: Layer " << layerID << " " << "Level " << levelID << endl;
+	cout << "Max Pool: Layer " << layerID << " " << "Level " << levelID << endl;
 
 	cout << endl;
 
