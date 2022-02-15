@@ -403,7 +403,7 @@ void Squishy::LayerFilterBackprop()
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 		cudaMalloc(&h_Outputs[i], outputByteCount);
-		cudaMemset(&h_Outputs[i], 0, outputByteCount);
+		cudaMemset(h_Outputs[i], 0, outputByteCount);
 	}
 
 	// fixup top level device array pointer to point to array of device row-pointers
@@ -430,13 +430,13 @@ void Squishy::LayerFilterBackprop()
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
-		cudaFree(&d_InputPointerArray[i]);
+		cudaFree(h_Inputs[i]);
 	}
 	cudaFree(d_InputPointerArray);
 	delete[] h_Inputs;
 
-	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
-		cudaFree(&d_FilterPointerArray[i]);
+	for (size_t i = 0; i < L_BACKWARD_NumberOf_INPUTS; i++) {
+		cudaFree(h_Filters[i]);
 	}
 	cudaFree(d_FilterPointerArray);
 	delete[] h_Filters;
@@ -483,11 +483,12 @@ void Squishy::LayerForwardPass(float** _inputs)
 	float** h_Biases = new float* [L_NumberOf_FILTERS]; //(float**)malloc(L_NumberOf_FILTERS * sizeof(float*));
 	float** h_Outputs = new float* [L_FORWARD_NumberOf_OUTPUTS]; //(float**)malloc(L_FORWARD_NumberOf_OUTPUTS * sizeof(float*));
 
-	float** d_BiasesPointerArray;
-	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(float));
 
 	float** d_InputPointerArray;
 	cudaMalloc((void**)&d_InputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(float*));
+
+	float** d_BiasesPointerArray;
+	cudaMalloc((void**)&d_BiasesPointerArray, L_NumberOf_FILTERS * sizeof(float*));
 
 	float** d_FilterPointerArray;
 	cudaMalloc((void**)&d_FilterPointerArray, L_NumberOf_FILTERS * sizeof(float*));
@@ -508,15 +509,15 @@ void Squishy::LayerForwardPass(float** _inputs)
 	}
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
-		cudaMalloc(&h_Biases[i], filterByteCount);
+		cudaMalloc(&h_Biases[i], biasByteCount);
 		cudaMemcpy(h_Biases[i], L_Biases[i], biasByteCount, cudaMemcpyHostToDevice);
 	}
 
 	for (size_t i = 0; i < L_FORWARD_NumberOf_OUTPUTS; i++) {
 		cudaMalloc(&h_Outputs[i], outputByteCount);
-		cudaMemset(&h_Outputs[i], 0, outputByteCount);
+		cudaMemset(h_Outputs[i], 0, outputByteCount);
 	}
-
+	int something = L_NumberOf_FILTERS * sizeof(float*);
 	// fixup top level device array pointer to point to array of device row-pointers
 	cudaMemcpy(d_InputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_FilterPointerArray, h_Filters, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyHostToDevice);
@@ -541,13 +542,13 @@ void Squishy::LayerForwardPass(float** _inputs)
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
-		cudaFree(&d_InputPointerArray[i]);
+		cudaFree(h_Inputs[i]);
 	}
 	cudaFree(d_InputPointerArray);
 	delete[] h_Inputs;
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
-		cudaFree(&d_FilterPointerArray[i]);
+		cudaFree(h_Filters[i]);
 	}
 	cudaFree(d_FilterPointerArray);
 	delete[] h_Filters;
@@ -614,7 +615,7 @@ void Squishy::LayerBackwardPass(float** _backpropInput)
 
 	for (size_t i = 0; i < L_BACKWARD_NumberOf_OUTPUTS; i++) {
 		cudaMalloc(&h_Outputs[i], outputByteCount);
-		cudaMemset(&h_Outputs[i], 0, outputByteCount);
+		cudaMemset(h_Outputs[i], 0, outputByteCount);
 	}
 
 	// fixup top level device array pointer to point to array of device row-pointers
@@ -640,13 +641,13 @@ void Squishy::LayerBackwardPass(float** _backpropInput)
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_BACKWARD_NumberOf_INPUTS; i++) {
-		cudaFree(&d_InputPointerArray[i]);
+		cudaFree(h_Inputs[i]);
 	}
 	cudaFree(d_InputPointerArray);
 	delete[] h_Inputs;
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
-		cudaFree(&d_FilterPointerArray[i]);
+		cudaFree(h_Filters[i]);
 	}
 	cudaFree(d_FilterPointerArray);
 	delete[] h_Filters;
@@ -818,8 +819,8 @@ void Squishy::LayerUpdate()
 	cudaMemcpy(h_FilterGradients, d_FilterGradientPointers, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_V_Matricies, d_V_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_S_Matricies, d_S_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_S_CORRECTED_Matricies, h_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_V_CORRECTED_Matricies, d_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_S_CORRECTED_Matricies, d_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 
@@ -848,8 +849,8 @@ void Squishy::LayerUpdate()
 	cudaFree(d_FilterGradientPointers);
 	cudaFree(d_V_Matricies);
 	cudaFree(d_S_Matricies);
-	cudaFree(h_V_CORRECTED_Matricies);
-	cudaFree(h_S_CORRECTED_Matricies);
+	cudaFree(d_V_CORRECTED_Matricies);
+	cudaFree(d_S_CORRECTED_Matricies);
 
 	delete[] h_Filters;
 	delete[] h_FilterGradients;
@@ -947,8 +948,8 @@ void Squishy::LayerBiasUpdate()
 	cudaMemcpy(h_BiasGradients, d_BiasGradientPointers, L_BACKWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_V_Matricies, d_V_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_S_Matricies, d_S_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_V_CORRECTED_Matricies, h_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_S_CORRECTED_Matricies, h_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_V_CORRECTED_Matricies, d_V_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_S_CORRECTED_Matricies, d_S_CORRECTED_Matricies, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyDeviceToHost);
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 
@@ -977,8 +978,8 @@ void Squishy::LayerBiasUpdate()
 	cudaFree(d_BiasGradientPointers);
 	cudaFree(d_V_Matricies);
 	cudaFree(d_S_Matricies);
-	cudaFree(h_V_CORRECTED_Matricies);
-	cudaFree(h_S_CORRECTED_Matricies);
+	cudaFree(d_V_CORRECTED_Matricies);
+	cudaFree(d_S_CORRECTED_Matricies);
 
 	delete[] h_Biases;
 	delete[] h_BiasGradients;
@@ -1087,14 +1088,14 @@ void Squishy::LayerFlipFilter()
 
 		cudaMemcpy(temp, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
 		memcpy(L_FLIPPED_Filters[i], temp, outputByteCount);
-		cudaFree(&h_Outputs[i]);
+		cudaFree(h_Outputs[i]);
 	}
 	cudaFree(d_OutputPointerArray);
 	delete[] h_Outputs;
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
-		cudaFree(&d_InputPointerArray[i]);
+		cudaFree(h_Inputs[i]);
 	}
 	cudaFree(d_InputPointerArray);
 	delete[] h_Inputs;
