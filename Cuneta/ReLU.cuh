@@ -11,6 +11,7 @@ class ReLU : public CunetaModule
 {
 public: 
 	ReLU(int _numberOfInputs, int _numberOfOutputs, int _IOHeight, int _IOWidth, int _layerID, int _levelID);
+	ReLU();
 	void ForwardPass(float* forwardPassInput, int fwdPassHeight, int fwdPassWidth) override;
 	void BackwardPass(float* backpropInput, int backPassHeight, int backPassWidth) override;
 
