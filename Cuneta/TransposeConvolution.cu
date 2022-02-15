@@ -204,16 +204,15 @@ __global__ void LayerTransposeInputPaddingKernel(float** __inputs, float** _outp
 
 __global__ void LayerTransposeConvFilterFlipKernel(float** _inputFilters, float** _outputFilters, int _filterSize)
 {
-	//float* filterToFlip = _inputFilters[0];
-	//int filterArraySize = _filterSize * _filterSize;
-	//float* flippedOutput = _outputFilters[0];
-	//int k = 0;
+	float* filterToFlip = _inputFilters[blockIdx.x];
+	int filterArraySize = _filterSize * _filterSize;
+	float* flippedOutput = _outputFilters[blockIdx.x];
+	int k = 0;
 
-	////Loop from back and assign value to new array
-	//for (int i = filterArraySize - 1; i >= 0; ) {
-	//	flippedOutput[k++] = filterToFlip[i--];
-	//}
-	_outputFilters[0][0] = 0;
+	//Loop from back and assign value to new array
+	for (int i = filterArraySize - 1; i >= 0; ) {
+		flippedOutput[k++] = filterToFlip[i--];
+	}
 }
 
 __global__ void LayerTransposeConvFilterBackpropKernel(float** _inputs, float** _outputs, float** _filterEquivalents, int _inputsWidth, int _outputsWidth, int _filterEquivsHeight, int _filterEquivsWidth, int _numberOfInputs)
@@ -375,7 +374,6 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize, in
 	L_FLIPPED_Filters = new float* [L_NumberOf_FILTERS];
 	L_Filter_BACKPROP_RESULTS = new float* [L_NumberOf_FILTERS];
 
-	L_Baises = new float* [L_NumberOf_FILTERS];
 	L_PrevBiases = new float* [L_NumberOf_FILTERS];
 
 	L_AdamOptimizer_V_Matrix = new float* [L_NumberOf_FILTERS];
@@ -402,7 +400,6 @@ TransposeConvolution::TransposeConvolution(int _filterSize, int _paddingSize, in
 		memset(L_AdamOptimizer_Corrected_V_Matrix[i], 0, byteCount);
 		memset(L_AdamOptimizer_Corrected_S_Matrix[i], 0, byteCount);
 
-		L_Biases = new float* [L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_S_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
 		L_BIAS_AdamOptimizer_Corrected_V_Matrix[i] = new float[L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH];
@@ -915,8 +912,7 @@ void TransposeConvolution::LayerFlipFilter()
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 
-		cudaMemcpy(temp, h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
-		memcpy(L_FLIPPED_Filters[i], temp, outputByteCount);
+		cudaMemcpy(L_FLIPPED_Filters[i], h_Outputs[i], outputByteCount, cudaMemcpyDeviceToHost);
 		cudaFree(h_Outputs[i]);
 	}
 	cudaFree(d_OutputPointerArray);
@@ -1216,7 +1212,10 @@ void TransposeConvolution::LayerBiasUpdate()
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
 		cudaMalloc(&h_Biases[i], biasMatrixByteCount);
 		cudaMemcpy(h_Biases[i], L_Biases[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
-		
+
+		L_PrevBiases[i] = new float[biasMatrixSize];
+		memcpy(L_PrevBiases[i], L_Biases[i], biasMatrixByteCount);
+
 		cudaMalloc(&h_V_Matricies[i], biasMatrixByteCount);
 		cudaMemcpy(h_V_Matricies[i], L_BIAS_AdamOptimizer_V_Matrix[i], biasMatrixByteCount, cudaMemcpyHostToDevice);
 
@@ -1270,7 +1269,7 @@ void TransposeConvolution::LayerBiasUpdate()
 		cudaFree(h_S_Matricies[i]);
 
 		cudaMemcpy(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], h_V_CORRECTED_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
-		memcpy(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], temp, biasMatrixByteCount);
+		//memcpy(L_BIAS_AdamOptimizer_Corrected_V_Matrix[i], temp, biasMatrixByteCount);
 		cudaFree(h_V_CORRECTED_Matricies[i]);
 
 		cudaMemcpy(L_BIAS_AdamOptimizer_Corrected_S_Matrix[i], h_S_CORRECTED_Matricies[i], biasMatrixByteCount, cudaMemcpyDeviceToHost);
@@ -1443,6 +1442,8 @@ void TransposeConvolution::LayerBiasInitialization()
 
 	int biasElementCount = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
+	L_Biases = new float* [L_NumberOf_FILTERS];
+
 	for (int biasNumber = 0; biasNumber < L_NumberOf_FILTERS; ++biasNumber)
 	{
 		L_Biases[biasNumber] = new float[biasElementCount];
@@ -1532,6 +1533,24 @@ void TransposeConvolution::DebugPrintAll()
 		cout << endl;
 	}
 
+	cout << ">>>> PADDED Forward Inputs <<<<" << endl << endl;
+
+	for (int inputIndex = 0; inputIndex < L_FORWARD_NumberOf_INPUTS; ++inputIndex)
+	{
+		cout << "--- Element " << inputIndex + 1 << "---" << endl;
+		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_PADDED_HEIGHT * L_FORWARD_InputLayer_PADDED_WIDTH; ++elementIndex)
+		{
+			cout << L_FORWARD_Pass_PADDED_INPUTS[inputIndex][elementIndex] << " ";
+			newLineCounter++;
+			if (newLineCounter == L_FORWARD_InputLayer_PADDED_WIDTH + 1)
+			{
+				cout << endl;
+				newLineCounter = 1;
+			}
+		}
+		cout << endl;
+	}
+
 	cout << ">>>> Normal Filter Inputs <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
@@ -1611,11 +1630,11 @@ void TransposeConvolution::DebugPrintAll()
 	for (int inputIndex = 0; inputIndex < L_BACKWARD_NumberOf_INPUTS; ++inputIndex)
 	{
 		cout << "- Element " << inputIndex + 1 << "-" << endl;
-		for (int elementIndex = 0; elementIndex < L_FORWARD_InputLayer_PADDED_HEIGHT * L_FORWARD_InputLayer_PADDED_WIDTH; ++elementIndex)
+		for (int elementIndex = 0; elementIndex < L_BACKWARD_InputLayer_HEIGHT * L_BACKWARD_InputLayer_WIDTH; ++elementIndex)
 		{
-			cout << L_FORWARD_Pass_PADDED_INPUTS[inputIndex][elementIndex] << " ";
+			cout << L_BACKWARD_Pass_INPUTS[inputIndex][elementIndex] << " ";
 			newLineCounter++;
-			if (newLineCounter == L_FORWARD_InputLayer_PADDED_WIDTH + 1)
+			if (newLineCounter == L_BACKWARD_InputLayer_WIDTH + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
@@ -1667,9 +1686,9 @@ void TransposeConvolution::DebugPrintAll()
 		cout << "- Element " << inputIndex + 1 << "-" << endl;
 		for (int elementIndex = 0; elementIndex < L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH; ++elementIndex)
 		{
-			cout << L_PrevBiases[inputIndex][elementIndex] << " ";
+			cout << L_PrevBiases[inputIndex][0] << " ";
 			newLineCounter++;
-			if (newLineCounter == L_BACKWARD_OutputLayer_WIDTH + 1)
+			if (newLineCounter == L_FORWARD_OutputLayer_WIDTH + 1)
 			{
 				cout << endl;
 				newLineCounter = 1;
