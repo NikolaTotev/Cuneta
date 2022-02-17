@@ -29,9 +29,9 @@ int main()
 	bool enableVerboseOutput;
 	bool trainingInputCompleted;
 	string mode;
-	int size = 252 * 156;
+	int size = 316 * 236;
 	float** temporary = new float*[size];
-	//Cuneta Cu = Cuneta(252, 156, temporary);
+	Cuneta Cu = Cuneta(316, 236, temporary);
 	cout << "Cuneta is starting..." << endl;
 	cout << "Welcome, what would you like to start with?" << endl;
 
@@ -204,7 +204,7 @@ int main()
 
 	if(userInput == "ShowConfig")
 	{
-		//Cu.PrintSetup();
+		Cu.PrintSetup();
 	}
 
 	if(mode == "Train")
