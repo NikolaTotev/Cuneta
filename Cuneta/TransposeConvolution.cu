@@ -214,12 +214,12 @@ __global__ void LayerTransposeConvFilterFlipKernel(float** _inputFilters, float*
 
 __global__ void LayerTransposeConvFilterBackpropKernel(float** _forwardInputs, float** _outputs, float** _backpropInputs, int _inputsWidth, int _outputsWidth, int _backpropInputHeight, int _backpropInputWidth, int _numberOfInputs)
 {
-	int inputSelectionIndex = threadIdx.x;
-	int filterSelectionIndex = blockIdx.z;
+	int forwardInputSelectionIndex = threadIdx.x;
+	int backpropInputSelectionIndex = blockIdx.z;
 	int outputSelectionIndex = blockIdx.z * _numberOfInputs + threadIdx.x;
 
-	float* selectedInput = _forwardInputs[inputSelectionIndex];
-	float* selectedFilter = _backpropInputs[filterSelectionIndex];
+	float* selectedForwardInput = _forwardInputs[forwardInputSelectionIndex];
+	float* selectedBackpropInput = _backpropInputs[backpropInputSelectionIndex];
 	float* selectedOutput = _outputs[outputSelectionIndex];
 
 	int inputStartReadRowIndex = blockIdx.x;
@@ -227,38 +227,30 @@ __global__ void LayerTransposeConvFilterBackpropKernel(float** _forwardInputs, f
 
 	int backpropInputStartReadRowIndex = inputStartReadRowIndex * 2;
 	int backpropInputStartReadColumnIndex = inputStartReadColumnIndex * 2;
+
+	int backpropArrayIndex = backpropInputStartReadRowIndex * _backpropInputWidth + backpropInputStartReadColumnIndex;
 	
 	int outputWriteIndex = 0;
 
-	int inputArrayIndex = 0;
+	int inputArrayIndex = inputStartReadRowIndex * _inputsWidth + inputStartReadColumnIndex;
 
 	
 	float result = 0;
 	int filterIndex = 0;
 
-	for (int row = 0; row < _backpropInputHeight/2; row++)
+	for (int row = 0; row < _outputsWidth; row++)
 	{
-		for (int col = 0; col < _backpropInputWidth/2; col++)
+		backpropInputStartReadColumnIndex = inputStartReadColumnIndex * 2;
+		for (int col = 0; col < _outputsWidth; col++)
 		{
-
-			for (int filterRows = 0; filterRows < _outputsWidth; ++filterRows)
-			{
-				for (int filterColumns = 0; filterColumns < _outputsWidth; ++filterColumns)
-				{
-					selectedOutput[outputWriteIndex]+=
-				}
-			}
-
-			inputStartReadColumnIndex++;
-			backpropInputStartReadColumnIndex = inputStartReadColumnIndex * 2;
+			backpropArrayIndex = backpropInputStartReadRowIndex * _backpropInputWidth + backpropInputStartReadColumnIndex;
+			result = selectedForwardInput[inputArrayIndex] * selectedBackpropInput[backpropArrayIndex];
+			atomicAdd(&selectedOutput[outputWriteIndex], result);
+			backpropInputStartReadColumnIndex ++;
+			outputWriteIndex++;
 		}
-
-		inputStartReadRowIndex++;
-		backpropInputStartReadRowIndex = inputStartReadRowIndex * 2;
-		outputWriteIndex = 0;
+		backpropInputStartReadRowIndex++;
 	}
-
-	selectedOutput[outputWriteIndex] = result;
 }
 
 __global__ void TransposeConvFilterUpdateKernel(float** _currentFilters, float** _filterGradients, float** _VMatricies, float** _SMatricies, float** _V_CorrectedMatrices, float** _S_CorrectedMatricies, int _filterSize, int _HyperParam_Beta1, int _HyperParam_Beta2, int _HyperParam_T, int _HyperParam_alpha, int _HyperParam_Epsilon)
@@ -632,20 +624,20 @@ void TransposeConvolution::LayerBackwardPass(float** _backpropInput)
 	cudaFree(d_FilterPointerArray);
 	delete[] h_Filters;
 
-	/*LayerFilterBackprop();
-	LayerUpdate();*/
+	LayerFilterBackprop();
+	//LayerUpdate();
 }
 
 void TransposeConvolution::LayerFilterBackprop()
 {
-	int inputSize = L_FORWARD_InputLayer_PADDED_HEIGHT * L_FORWARD_InputLayer_PADDED_WIDTH;
+	int forwardInputSize = L_FORWARD_InputLayer_HEIGHT *L_FORWARD_InputLayer_WIDTH;
 
-	int filterEquivalentSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
+	int backpropInputSize = L_FORWARD_OutputLayer_HEIGHT * L_FORWARD_OutputLayer_WIDTH;
 
 	int outputSize = m_FilterSize * m_FilterSize;
 
-	size_t inputByteCount = inputSize * sizeof(float);
-	size_t filterEquivalentByteCount = filterEquivalentSize * sizeof(float);
+	size_t forwardInputByteCount = forwardInputSize * sizeof(float);
+	size_t backpropInputByteCount = backpropInputSize * sizeof(float);
 	size_t outputByteCount = outputSize * sizeof(float);
 
 
@@ -669,11 +661,11 @@ void TransposeConvolution::LayerFilterBackprop()
 
 
 
-	float** d_InputPointerArray;
-	cudaMalloc((void**)&d_InputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(float*));
+	float** d_ForwarInputPointerArray;
+	cudaMalloc((void**)&d_ForwarInputPointerArray, L_FORWARD_NumberOf_INPUTS * sizeof(float*));
 
-	float** d_FilterPointerArray;
-	cudaMalloc((void**)&d_FilterPointerArray, L_BACKWARD_NumberOf_INPUTS * sizeof(float*));
+	float** d_BackpropInputPointerArray;
+	cudaMalloc((void**)&d_BackpropInputPointerArray, L_BACKWARD_NumberOf_INPUTS * sizeof(float*));
 
 	float** d_OutputPointerArray;
 	cudaMalloc((void**)&d_OutputPointerArray, L_NumberOf_FILTERS * sizeof(float*));
@@ -681,13 +673,13 @@ void TransposeConvolution::LayerFilterBackprop()
 
 	// allocate each device row-pointer, then copy host data to it
 	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
-		cudaMalloc(&h_Inputs[i], inputByteCount);
-		cudaMemcpy(h_Inputs[i], L_FORWARD_Pass_INPUTS[i], inputByteCount, cudaMemcpyHostToDevice);
+		cudaMalloc(&h_Inputs[i], forwardInputByteCount);
+		cudaMemcpy(h_Inputs[i], L_FORWARD_Pass_INPUTS[i], forwardInputByteCount, cudaMemcpyHostToDevice);
 	}
 
 	for (size_t i = 0; i < L_BACKWARD_NumberOf_INPUTS; i++) {
-		cudaMalloc(&h_Filters[i], filterEquivalentByteCount);
-		cudaMemcpy(h_Filters[i], L_BACKWARD_Pass_INPUTS[i], filterEquivalentByteCount, cudaMemcpyHostToDevice);
+		cudaMalloc(&h_Filters[i], backpropInputByteCount);
+		cudaMemcpy(h_Filters[i], L_BACKWARD_Pass_INPUTS[i], backpropInputByteCount, cudaMemcpyHostToDevice);
 	}
 
 	for (size_t i = 0; i < L_NumberOf_FILTERS; i++) {
@@ -696,14 +688,14 @@ void TransposeConvolution::LayerFilterBackprop()
 	}
 
 	// fixup top level device array pointer to point to array of device row-pointers
-	cudaMemcpy(d_InputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyHostToDevice);
-	cudaMemcpy(d_FilterPointerArray, h_Filters, L_BACKWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_ForwarInputPointerArray, h_Inputs, L_FORWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_BackpropInputPointerArray, h_Filters, L_BACKWARD_NumberOf_INPUTS * sizeof(float*), cudaMemcpyHostToDevice);
 	cudaMemcpy(d_OutputPointerArray, h_Outputs, L_NumberOf_FILTERS * sizeof(float*), cudaMemcpyHostToDevice);
 
 	dim3 blockGrid(numberOfBlockx_X, numberOfBlocks_Y, numberOfBlocks_Z); ///OK
 	dim3 threads(numberOfThreadsPerBlock, 1, 1); ///OK
 
-	LayerTransposeConvFilterBackpropKernel << <blockGrid, threads >> > (d_InputPointerArray, d_OutputPointerArray, d_FilterPointerArray, L_FORWARD_InputLayer_PADDED_WIDTH, m_FilterSize, L_BACKWARD_InputLayer_HEIGHT, L_BACKWARD_InputLayer_WIDTH, L_FORWARD_NumberOf_INPUTS);
+	LayerTransposeConvFilterBackpropKernel << <blockGrid, threads >> > (d_ForwarInputPointerArray, d_OutputPointerArray, d_BackpropInputPointerArray, L_FORWARD_InputLayer_WIDTH, m_FilterSize, L_BACKWARD_InputLayer_HEIGHT, L_BACKWARD_InputLayer_WIDTH, L_FORWARD_NumberOf_INPUTS);
 	cudaDeviceSynchronize();
 
 	float* temp = new float[outputSize];
@@ -721,13 +713,13 @@ void TransposeConvolution::LayerFilterBackprop()
 	for (size_t i = 0; i < L_FORWARD_NumberOf_INPUTS; i++) {
 		cudaFree(h_Inputs[i]);
 	}
-	cudaFree(d_InputPointerArray);
+	cudaFree(d_ForwarInputPointerArray);
 	delete[] h_Inputs;
 
 	for (size_t i = 0; i < L_BACKWARD_NumberOf_INPUTS; i++) {
 		cudaFree(h_Filters[i]);
 	}
-	cudaFree(d_FilterPointerArray);
+	cudaFree(d_BackpropInputPointerArray);
 	delete[] h_Filters;
 }
 
@@ -1263,7 +1255,7 @@ void TransposeConvolution::DebugPrintAll()
 		cout << endl;
 	}
 
-	/*cout << ">>>> Filter Backprop Outputs <<<<" << endl << endl;
+	cout << ">>>> Filter Backprop Outputs <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
 	{
@@ -1281,6 +1273,7 @@ void TransposeConvolution::DebugPrintAll()
 		cout << endl;
 	}
 
+	/*
 	cout << ">>>> Bias Outputs Before Update <<<<" << endl << endl;
 
 	for (int inputIndex = 0; inputIndex < L_NumberOf_FILTERS; ++inputIndex)
