@@ -694,8 +694,8 @@ void NetworkValidator::TestTransposeConvolution()
 	int Output_WIDTH = Input_WIDTH*2;
 	int Input_LENGTH = Input_HEIGHT * Input_WIDTH;
 	int Output_LENGTH = Output_HEIGHT * Output_WIDTH;
-	int Number_Of_INPUT_Layers = 2;
-	int Number_Of_OUTPUT_Layers = 4;
+	int Number_Of_INPUT_Layers = 4;
+	int Number_Of_OUTPUT_Layers = 2;
 	int Filter_Size = 3;
 	int Padding = 2;
 
